@@ -1,10 +1,5 @@
 (() => {
-  const STAGES = [
-    "rubric_parser",
-    "cot_evaluator",
-    "reflection_auditor",
-    "feedback_synthesizer",
-  ];
+  "use strict";
 
   const state = {
     assignments: [],
@@ -21,10 +16,18 @@
     },
   };
 
+  const STAGES = [
+    "rubric_parser",
+    "cot_evaluator",
+    "reflection_auditor",
+    "feedback_synthesizer",
+  ];
+
   const el = (id) => document.getElementById(id);
 
   function escapeHtml(value) {
-    return String(value ?? "")
+    if (value === null || value === undefined) return "";
+    return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -32,191 +35,225 @@
       .replace(/'/g, "&#39;");
   }
 
+  function showBanner(message, isError = false) {
+    const wrapper = el("status-banner");
+    const inner = el("status-banner-inner");
+    const text = el("status-banner-text");
+    if (!wrapper || !inner || !text) return;
+
+    text.textContent = message;
+    wrapper.classList.remove("hidden");
+    if (isError) {
+      inner.className =
+        "rounded-2xl px-5 py-3.5 text-xs sm:text-sm flex items-center justify-between border bg-rose-50 border-rose-200 text-rose-900 shadow-xs animate-reveal";
+    } else {
+      inner.className =
+        "rounded-2xl px-5 py-3.5 text-xs sm:text-sm flex items-center justify-between border bg-emerald-50 border-emerald-200 text-emerald-900 shadow-xs animate-reveal";
+    }
+  }
+
+  function hideBanner() {
+    const wrapper = el("status-banner");
+    if (wrapper) wrapper.classList.add("hidden");
+  }
+
   function buildHeaders(extra = {}) {
     const headers = { ...extra };
     const apiKey = el("api-key-input")?.value.trim();
     const model = el("model-select")?.value.trim();
-    if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
+    if (apiKey) headers["X-Gemini-Key"] = apiKey;
     if (model) headers["X-Gemini-Model"] = model;
     return headers;
   }
 
-  function showBanner(message, isError = false) {
-    const banner = el("status-banner");
-    const text = el("status-banner-text");
-    if (!banner || !text) return;
-    text.textContent = message;
-    banner.className = isError
-      ? "bg-rose-50 border-b border-rose-200 px-4 py-2 text-xs text-rose-900"
-      : "bg-indigo-50 border-b border-indigo-200 px-4 py-2 text-xs text-indigo-900";
-    banner.classList.remove("hidden");
-  }
-
-  function hideBanner() {
-    el("status-banner")?.classList.add("hidden");
-  }
-
   function formatDelta(delta) {
     const num = Number(delta || 0);
+    if (Math.abs(num) < 1e-6) return "0.0";
     return num > 0 ? `+${num.toFixed(1)}` : num.toFixed(1);
   }
 
-  function resetPipelineStepper(statusText = "Idle") {
+  function resetPipelineStepper(statusLabel = "Idle · Ready") {
     const overall = el("pipeline-overall-status");
     if (overall) {
-      overall.textContent = statusText;
+      overall.textContent = statusLabel;
       overall.className =
-        "text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600";
+        "text-xs font-mono font-medium px-3.5 py-1.5 rounded-full bg-canvas-subtle text-ink-secondary tabular-nums border border-black/[0.06]";
     }
     for (const stage of STAGES) {
-      const card = el(`stage-card-${stage}`);
-      const badge = el(`stage-badge-${stage}`);
-      if (card) {
-        card.className =
-          "border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between";
-      }
-      if (badge) {
-        badge.textContent = "pending";
-        badge.className = "text-[10px] font-mono text-slate-400";
+      const card = el(`stage-${stage}`);
+      if (!card) continue;
+      card.className =
+        "stage-card border border-black/[0.08] rounded-2xl p-4 bg-canvas/60 transition-all duration-300";
+      const ind = card.querySelector(".stage-indicator");
+      if (ind) {
+        ind.innerHTML = `<span class="text-ink-muted">waiting</span>`;
+        ind.className = "stage-indicator text-[11px] font-mono text-ink-muted tabular-nums";
       }
     }
   }
 
-  function updateStageState(stage, mode, detailText = "") {
-    const card = el(`stage-card-${stage}`);
-    const badge = el(`stage-badge-${stage}`);
-    if (!card || !badge) return;
+  function updateStageState(stageName, mode, extraText = "") {
+    const card = el(`stage-${stageName}`);
+    if (!card) return;
+    const ind = card.querySelector(".stage-indicator");
 
     if (mode === "running") {
       card.className =
-        "border-2 border-indigo-500 rounded-lg p-2.5 bg-indigo-50/60 flex flex-col justify-between shadow-xs";
-      badge.textContent = "running...";
-      badge.className =
-        "text-[10px] font-mono text-indigo-700 font-semibold animate-pulse";
+        "stage-card border-2 border-indigo-600 rounded-2xl p-4 bg-indigo-50/40 stage-running-glow transition-all duration-300";
+      if (ind) {
+        ind.innerHTML = `
+          <span class="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
+            <span>running...</span>
+          </span>
+        `;
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
+      }
     } else if (mode === "complete") {
       card.className =
-        "border border-emerald-300 rounded-lg p-2.5 bg-emerald-50/40 flex flex-col justify-between";
-      badge.textContent = detailText || "done";
-      badge.className = "text-[10px] font-mono text-emerald-700 font-semibold";
+        "stage-card border border-emerald-300/90 rounded-2xl p-4 bg-emerald-50/35 transition-all duration-300";
+      if (ind) {
+        const label = escapeHtml(extraText || "done");
+        ind.innerHTML = `
+          <span class="inline-flex items-center gap-1 text-emerald-800 font-semibold">
+            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path class="svg-check-draw" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>${label}</span>
+          </span>
+        `;
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
+      }
     } else if (mode === "error") {
       card.className =
-        "border border-rose-300 rounded-lg p-2.5 bg-rose-50/60 flex flex-col justify-between";
-      badge.textContent = "failed";
-      badge.className = "text-[10px] font-mono text-rose-700 font-semibold";
+        "stage-card border-2 border-rose-400 rounded-2xl p-4 bg-rose-50/50 transition-all duration-300";
+      if (ind) {
+        ind.textContent = "error";
+        ind.className = "stage-indicator text-[11px] font-mono text-rose-700 font-semibold";
+      }
     }
+  }
+
+  function renderStructuredRubric(rubric) {
+    const container = el("structured-rubric-view");
+    if (!container) return;
+
+    if (!rubric || !Array.isArray(rubric.criteria) || rubric.criteria.length === 0) {
+      container.innerHTML = `<p class="text-ink-muted italic py-2">No structured rubric cached yet. Click "Parse / Refresh Rubric" above or run an evaluation to parse automatically.</p>`;
+      return;
+    }
+
+    const criteriaHtml = rubric.criteria
+      .map((c) => {
+        const bandsHtml = (c.scoring_bands || [])
+          .map(
+            (b) =>
+              `<span class="inline-block bg-canvas border border-black/[0.08] rounded-md px-2 py-0.5 text-[10px] font-mono text-ink-secondary">${escapeHtml(
+                b.band_label
+              )}: ${escapeHtml(b.points_range)}</span>`
+          )
+          .join(" ");
+        return `
+        <div class="border border-black/[0.07] rounded-xl p-3 bg-[#FAF8F5]/60 space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-semibold text-ink">${escapeHtml(c.criterion_id)} · ${escapeHtml(
+          c.title
+        )}</span>
+            <span class="font-mono font-semibold text-indigo-700 text-[11px] tabular-nums">${Number(
+              c.max_points
+            ).toFixed(1)} pts</span>
+          </div>
+          <p class="text-ink-secondary text-[11px] leading-relaxed">${escapeHtml(c.description)}</p>
+          <div class="flex flex-wrap gap-1 pt-0.5">${bandsHtml}</div>
+        </div>
+      `;
+      })
+      .join("");
+
+    container.innerHTML = `
+      <div class="flex items-center justify-between text-xs font-semibold text-ink pb-2 mb-2 border-b border-black/[0.07]">
+        <span>${escapeHtml(rubric.assignment_title || "Parsed Rubric")}</span>
+        <span class="font-mono text-indigo-700 tabular-nums">Total: ${Number(
+          rubric.total_points || 0
+        ).toFixed(1)} pts</span>
+      </div>
+      <div class="space-y-2">${criteriaHtml}</div>
+    `;
   }
 
   function renderAssignmentsList() {
     const container = el("assignments-list");
     if (!container) return;
 
-    if (!state.assignments.length) {
-      container.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">No assignments saved. Click "Seed / Reset Sample Assignments".</div>`;
+    if (state.assignments.length === 0) {
+      container.innerHTML = `<div class="text-xs text-ink-muted py-6 text-center">No assignments found. Click "Reset Demos" above to load samples.</div>`;
       return;
     }
 
     container.innerHTML = state.assignments
       .map((a) => {
         const isSelected = a.id === state.activeAssignmentId;
-        const hasRubric = Boolean(a.structured_rubric);
-        const hasSample = Boolean(state.sampleSubmissions[a.id]);
+        const typeBadge =
+          a.assignment_type === "code"
+            ? "bg-indigo-50 text-indigo-700 border-indigo-200/70"
+            : a.assignment_type === "theory"
+            ? "bg-amber-50 text-amber-800 border-amber-200/70"
+            : "bg-teal-50 text-teal-800 border-teal-200/70";
+        const rubricStatus = a.structured_rubric ? "Rubric Ready" : "Raw Rubric";
+
         return `
         <div
-          data-assign-id="${escapeHtml(a.id)}"
-          class="assignment-row px-3.5 py-2.5 cursor-pointer transition-colors flex items-start justify-between gap-2 ${
-            isSelected ? "bg-indigo-50/90 border-l-4 border-indigo-600" : "hover:bg-slate-50"
+          data-assignment-id="${escapeHtml(a.id)}"
+          class="assign-card-item rounded-2xl p-3.5 cursor-pointer transition-all flex items-start justify-between gap-3 border ${
+            isSelected
+              ? "bg-indigo-50/50 border-indigo-600 shadow-2xs"
+              : "bg-white border-black/[0.08] hover:bg-canvas/60"
           }"
         >
           <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5 mb-0.5">
-              <span class="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-200 text-slate-700">${escapeHtml(
-                a.assignment_type
-              )}</span>
-              ${
-                hasRubric
-                  ? `<span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 rounded">rubric ready</span>`
-                  : `<span class="text-[10px] font-mono text-amber-700 bg-amber-50 border border-amber-200 px-1.5 rounded">unparsed</span>`
-              }
-              ${
-                hasSample
-                  ? `<span class="text-[10px] font-mono text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 rounded">sample</span>`
-                  : ""
-              }
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full shrink-0 ${
+                isSelected ? "bg-indigo-600" : "bg-stone-300"
+              }"></span>
+              <div class="text-xs font-semibold text-ink truncate">${escapeHtml(a.title)}</div>
             </div>
-            <div class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(a.title)}</div>
+            <div class="flex items-center gap-2 mt-1.5 pl-4">
+              <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md border ${typeBadge}">${escapeHtml(
+          a.assignment_type
+        )}</span>
+              <span class="text-[11px] font-mono text-ink-muted">${rubricStatus}</span>
+            </div>
           </div>
           <button
             type="button"
-            data-delete-assign="${escapeHtml(a.id)}"
+            data-delete-assignment="${escapeHtml(a.id)}"
             title="Delete assignment"
-            class="text-slate-400 hover:text-rose-600 text-xs px-1.5 py-0.5 rounded"
-          >&times;</button>
+            class="text-ink-muted hover:text-rose-600 text-sm px-1.5 py-0.5 rounded-lg leading-none transition-colors"
+          >
+            &times;
+          </button>
         </div>
       `;
       })
       .join("");
 
-    container.querySelectorAll(".assignment-row").forEach((row) => {
-      row.addEventListener("click", (evt) => {
-        const delBtn = evt.target.closest("[data-delete-assign]");
+    container.querySelectorAll(".assign-card-item").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        const delBtn = e.target.closest("[data-delete-assignment]");
         if (delBtn) return;
-        const id = row.getAttribute("data-assign-id");
+        const id = row.getAttribute("data-assignment-id");
         selectAssignment(id);
       });
     });
 
-    container.querySelectorAll("[data-delete-assign]").forEach((btn) => {
-      btn.addEventListener("click", async (evt) => {
-        evt.stopPropagation();
-        const id = btn.getAttribute("data-delete-assign");
+    container.querySelectorAll("[data-delete-assignment]").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-delete-assignment");
         if (!id) return;
         await deleteAssignment(id);
       });
     });
-  }
-
-  function renderStructuredRubric(rubric) {
-    const container = el("active-rubric-container");
-    const pointsBadge = el("rubric-points-badge");
-    if (!container || !pointsBadge) return;
-
-    if (!rubric || !Array.isArray(rubric.criteria) || !rubric.criteria.length) {
-      pointsBadge.textContent = "Unparsed";
-      container.innerHTML = `<p class="text-slate-400">No structured rubric cached yet. Stage 1 will automatically parse or synthesize it when evaluation runs.</p>`;
-      return;
-    }
-
-    pointsBadge.textContent = `${Number(rubric.total_max_points || 0).toFixed(0)} pts`;
-    container.innerHTML = rubric.criteria
-      .map((c) => {
-        const bandsHtml = (c.scoring_bands || [])
-          .map(
-            (b) => `
-            <div class="text-[11px] bg-slate-50 border border-slate-200 rounded px-2 py-1">
-              <span class="font-semibold text-slate-700">${escapeHtml(b.band_label)} (${escapeHtml(
-              b.points_range
-            )} pts):</span>
-              <span class="text-slate-600">${escapeHtml(b.description)}</span>
-            </div>
-          `
-          )
-          .join("");
-        return `
-        <div class="border border-slate-200 rounded-lg p-2.5 space-y-1.5">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold text-slate-800">${escapeHtml(c.criterion_id)}: ${escapeHtml(
-          c.title
-        )}</span>
-            <span class="text-[11px] font-mono bg-indigo-50 text-indigo-800 px-2 py-0.5 rounded border border-indigo-200">${Number(
-              c.max_points
-            ).toFixed(1)} pts &bull; ${escapeHtml(c.evaluation_focus)}</span>
-          </div>
-          <p class="text-slate-600 text-[11px]">${escapeHtml(c.description)}</p>
-          <div class="grid grid-cols-1 gap-1 pt-1">${bandsHtml}</div>
-        </div>
-      `;
-      })
-      .join("");
   }
 
   function selectAssignment(assignmentId) {
@@ -224,29 +261,40 @@
     const active = state.assignments.find((a) => a.id === assignmentId) || null;
     renderAssignmentsList();
 
+    const titleEl = el("assignment-detail-title");
+    const typeBadgeEl = el("assignment-type-badge");
+    const promptEl = el("assignment-prompt-view");
+    const refEl = el("assignment-reference-view");
+
     if (!active) {
-      el("active-assignment-title").textContent = "Select or Seed an Assignment";
-      el("active-assignment-badge").textContent = "NONE";
-      el("active-assignment-prompt").textContent = "No assignment selected.";
-      el("active-assignment-reference").textContent = "None provided.";
+      if (titleEl) titleEl.textContent = "Select an Assignment";
+      if (typeBadgeEl) typeBadgeEl.textContent = "--";
+      if (promptEl) promptEl.textContent = "No assignment selected.";
+      if (refEl) refEl.textContent = "No reference solution.";
       renderStructuredRubric(null);
       return;
     }
 
-    el("active-assignment-title").textContent = active.title;
-    el("active-assignment-badge").textContent = active.assignment_type.toUpperCase();
-    el("active-assignment-prompt").textContent = active.prompt_text;
-    el("active-assignment-reference").textContent =
-      active.reference_solution_text || "None provided.";
+    if (titleEl) titleEl.textContent = active.title;
+    if (typeBadgeEl) typeBadgeEl.textContent = active.assignment_type;
+    if (promptEl) promptEl.textContent = active.prompt_text || "";
+    if (refEl) {
+      refEl.textContent =
+        active.reference_solution_text || "No reference solution provided.";
+    }
     renderStructuredRubric(active.structured_rubric);
   }
 
   function renderEvaluationsHistory() {
-    const container = el("evaluations-list");
+    const container = el("evaluations-history-list");
+    const countBadge = el("history-count-badge");
+    if (countBadge) {
+      countBadge.textContent = String(state.evaluations.length || 0);
+    }
     if (!container) return;
 
-    if (!state.evaluations.length) {
-      container.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">No evaluations recorded yet.</div>`;
+    if (state.evaluations.length === 0) {
+      container.innerHTML = `<div class="text-xs text-ink-muted py-10 text-center">No evaluations recorded yet. Run your first 4-agent evaluation to populate the archive.</div>`;
       return;
     }
 
@@ -255,35 +303,37 @@
         const isSelected = state.activeEvaluation && state.activeEvaluation.id === ev.id;
         const statusColor =
           ev.status === "completed"
-            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
             : ev.status === "failed"
-            ? "bg-rose-50 text-rose-700 border-rose-200"
-            : "bg-amber-50 text-amber-700 border-amber-200";
+            ? "bg-rose-50 text-rose-800 border-rose-200"
+            : "bg-amber-50 text-amber-800 border-amber-200";
         return `
         <div
           data-eval-id="${escapeHtml(ev.id)}"
-          class="eval-history-row px-3.5 py-2.5 cursor-pointer transition-colors flex items-center justify-between gap-2 ${
-            isSelected ? "bg-indigo-50/90 border-l-4 border-indigo-600" : "hover:bg-slate-50"
+          class="eval-history-row rounded-2xl p-4 cursor-pointer transition-all flex items-center justify-between gap-3 border ${
+            isSelected
+              ? "bg-indigo-50/70 border-indigo-600 shadow-2xs"
+              : "bg-white border-black/[0.07] hover:border-indigo-300"
           }"
         >
           <div class="min-w-0">
-            <div class="text-xs font-semibold text-slate-800 truncate">
+            <div class="text-xs font-semibold text-ink truncate">
               ${escapeHtml(ev.student_name)}
-              <span class="text-slate-400 font-normal">${
+              <span class="text-ink-muted font-normal">${
                 ev.student_id ? `(${escapeHtml(ev.student_id)})` : ""
               }</span>
             </div>
-            <div class="text-[11px] text-slate-500 truncate font-mono">${escapeHtml(
+            <div class="text-[11px] text-ink-secondary truncate font-mono mt-0.5">${escapeHtml(
               ev.submission_filename
             )}</div>
           </div>
           <div class="text-right shrink-0">
-            <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${statusColor}">
+            <span class="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-lg border tabular-nums ${statusColor}">
               ${
                 ev.status === "completed"
                   ? `${Number(ev.total_final_score).toFixed(1)}/${Number(
                       ev.max_possible_score
-                    ).toFixed(0)} (${escapeHtml(ev.letter_grade)})`
+                    ).toFixed(0)} · ${escapeHtml(ev.letter_grade)}`
                   : escapeHtml(ev.status)
               }
             </span>
@@ -298,6 +348,7 @@
         const id = row.getAttribute("data-eval-id");
         if (!id) return;
         await loadEvaluationById(id);
+        el("history-drawer-modal")?.classList.add("hidden");
       });
     });
   }
@@ -306,24 +357,52 @@
     const panel = el("tab-panel-feedback");
     if (!panel) return;
     if (!feedback) {
-      panel.innerHTML = `<p class="text-slate-400 text-center py-8">No pedagogical feedback available for this evaluation.</p>`;
+      panel.innerHTML = `<p class="text-ink-muted text-center py-12 text-xs">No pedagogical feedback available for this evaluation.</p>`;
       return;
     }
 
     const strengthsHtml = (feedback.key_strengths || [])
-      .map((s) => `<li class="flex items-start gap-2"><span class="text-emerald-600 font-bold">&check;</span><span>${escapeHtml(s)}</span></li>`)
+      .map(
+        (s) => `
+        <li class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50 border border-emerald-200/60">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">&check;</span>
+          <span class="text-ink text-xs leading-relaxed">${escapeHtml(s)}</span>
+        </li>`
+      )
       .join("");
 
     const gapsHtml = (feedback.learning_gaps || [])
       .map(
         (g, idx) => `
-        <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/60 space-y-1.5">
-          <div class="font-semibold text-indigo-900">${idx + 1}. ${escapeHtml(g.concept_or_skill)}</div>
-          <p class="text-slate-700"><span class="font-semibold">Observed Issue:</span> ${escapeHtml(g.observed_issue)}</p>
-          <p class="text-slate-700"><span class="font-semibold">Actionable Fix:</span> ${escapeHtml(g.actionable_fix)}</p>
-          <pre class="bg-slate-900 text-slate-100 font-mono text-[11px] p-2.5 rounded overflow-x-auto whitespace-pre-wrap">${escapeHtml(
-            g.example_or_hint
-          )}</pre>
+        <div class="border border-black/[0.08] rounded-2xl p-5 bg-[#FAF8F5] space-y-3 animate-reveal" style="--stagger: ${idx}">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900">
+              Gap 0${idx + 1}
+            </span>
+            <h5 class="font-editorial text-xl text-ink">${escapeHtml(g.concept_or_skill)}</h5>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="bg-white p-3.5 rounded-xl border border-black/[0.06]">
+              <div class="font-mono text-[10px] uppercase tracking-wider text-rose-700 font-semibold mb-1">
+                Observed Issue
+              </div>
+              <p class="text-ink-secondary leading-relaxed">${escapeHtml(g.observed_issue)}</p>
+            </div>
+            <div class="bg-white p-3.5 rounded-xl border border-black/[0.06]">
+              <div class="font-mono text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mb-1">
+                Actionable Fix
+              </div>
+              <p class="text-ink-secondary leading-relaxed">${escapeHtml(g.actionable_fix)}</p>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="font-mono text-[10px] uppercase tracking-wider text-ink-muted">
+              Conceptual Hint / Exemplar Snippet
+            </div>
+            <pre class="bg-[#141413] text-stone-100 font-mono text-[11px] p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed">${escapeHtml(
+              g.example_or_hint
+            )}</pre>
+          </div>
         </div>
       `
       )
@@ -332,36 +411,46 @@
     const roadmapHtml = (feedback.revision_roadmap || [])
       .map(
         (step, idx) =>
-          `<li class="flex items-start gap-2"><span class="font-mono font-bold text-indigo-600">${
-            idx + 1
-          }.</span><span>${escapeHtml(step)}</span></li>`
+          `<li class="flex items-start gap-3 p-3 rounded-xl bg-canvas border border-black/[0.06]">
+            <span class="font-editorial text-lg leading-none w-6 h-6 rounded-full bg-ink text-white flex items-center justify-center shrink-0">${
+              idx + 1
+            }</span>
+            <span class="text-xs text-ink leading-relaxed pt-0.5">${escapeHtml(step)}</span>
+          </li>`
       )
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-4">
-        <div class="bg-indigo-50/70 border border-indigo-200 rounded-lg p-3">
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-indigo-900 mb-1">Executive Summary</h4>
-          <p class="text-slate-800 leading-relaxed">${escapeHtml(feedback.executive_summary)}</p>
+      <div class="space-y-7 tab-content-enter">
+        <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-5 space-y-1.5">
+          <div class="text-[10px] font-mono font-semibold uppercase tracking-widest text-indigo-800">
+            Executive Assessment Summary
+          </div>
+          <p class="text-ink text-sm leading-relaxed">${escapeHtml(feedback.executive_summary)}</p>
         </div>
 
-        <div>
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">Key Strengths</h4>
-          <ul class="space-y-1 text-slate-700">${strengthsHtml || "<li>None noted.</li>"}</ul>
+        <div class="space-y-2.5">
+          <h4 class="font-editorial text-2xl text-ink">Demonstrated Strengths</h4>
+          <ul class="grid grid-cols-1 gap-2">${
+            strengthsHtml || "<li class='text-xs text-ink-muted'>None noted.</li>"
+          }</ul>
         </div>
 
-        <div>
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">Actionable Learning Gaps</h4>
-          <div class="space-y-2.5">${gapsHtml || "<p class='text-slate-500'>No major learning gaps identified.</p>"}</div>
+        <div class="space-y-3">
+          <h4 class="font-editorial text-2xl text-ink">Targeted Learning Gaps &amp; Coaching</h4>
+          <div class="space-y-4">${
+            gapsHtml ||
+            "<p class='text-xs text-ink-muted'>No major learning gaps identified.</p>"
+          }</div>
         </div>
 
-        <div>
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">Priority Revision Roadmap</h4>
-          <ol class="space-y-1.5 text-slate-700">${roadmapHtml}</ol>
+        <div class="space-y-2.5">
+          <h4 class="font-editorial text-2xl text-ink">Priority Revision Roadmap</h4>
+          <ol class="space-y-2">${roadmapHtml}</ol>
         </div>
 
-        <blockquote class="border-l-4 border-emerald-500 bg-emerald-50/70 px-3 py-2 text-emerald-950 italic rounded-r">
-          ${escapeHtml(feedback.encouraging_closing)}
+        <blockquote class="border-l-4 border-emerald-600 bg-emerald-50/60 px-5 py-4 text-emerald-950 font-editorial text-xl italic rounded-r-2xl">
+          &ldquo;${escapeHtml(feedback.encouraging_closing)}&rdquo;
         </blockquote>
       </div>
     `;
@@ -371,7 +460,7 @@
     const panel = el("tab-panel-criteria");
     if (!panel) return;
     if (!initialEval || !Array.isArray(initialEval.criterion_evaluations)) {
-      panel.innerHTML = `<p class="text-slate-400 text-center py-8">No criterion evaluations available.</p>`;
+      panel.innerHTML = `<p class="text-ink-muted text-center py-12 text-xs">No criterion evaluations available.</p>`;
       return;
     }
 
@@ -383,73 +472,89 @@
     }
 
     const cardsHtml = initialEval.criterion_evaluations
-      .map((ce) => {
+      .map((ce, idx) => {
         const audit = auditsById[String(ce.criterion_id).trim()];
         const finalScore = audit ? audit.calibrated_score : ce.initial_score;
         const verdict = audit ? audit.audit_verdict : "verified";
+        const pct =
+          ce.max_points > 0 ? Math.min(100, Math.max(0, (finalScore / ce.max_points) * 100)) : 0;
 
         const quotesHtml = (ce.student_evidence_quotes || [])
           .map(
             (q) =>
-              `<pre class="bg-slate-900 text-amber-200 font-mono text-[11px] p-2 rounded overflow-x-auto whitespace-pre-wrap">${escapeHtml(
+              `<pre class="bg-[#141413] text-amber-200/95 font-mono text-[11px] p-3.5 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed">${escapeHtml(
                 q
               )}</pre>`
           )
           .join("");
 
         const strengthsHtml = (ce.strengths_observed || [])
-          .map((s) => `<li>&bull; ${escapeHtml(s)}</li>`)
+          .map((s) => `<li class="leading-relaxed">&bull; ${escapeHtml(s)}</li>`)
           .join("");
 
         const flawsHtml = (ce.flaws_or_gaps_observed || [])
-          .map((f) => `<li>&bull; ${escapeHtml(f)}</li>`)
+          .map((f) => `<li class="leading-relaxed">&bull; ${escapeHtml(f)}</li>`)
           .join("");
 
         return `
-        <div class="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-            <div class="font-semibold text-slate-900">${escapeHtml(ce.criterion_id)}: ${escapeHtml(
-          ce.criterion_title
-        )}</div>
-            <div class="flex items-center gap-1.5 font-mono text-[11px]">
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">Init: ${Number(
+        <div class="border border-black/[0.08] rounded-2xl p-5 space-y-4 bg-[#FAF8F5]/70 animate-reveal" style="--stagger: ${idx}">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.07] pb-3">
+            <div>
+              <span class="font-mono text-[11px] text-indigo-700 font-semibold">${escapeHtml(
+                ce.criterion_id
+              )}</span>
+              <h5 class="font-editorial text-2xl text-ink leading-snug">${escapeHtml(
+                ce.criterion_title
+              )}</h5>
+            </div>
+            <div class="flex items-center gap-2 font-mono text-xs tabular-nums">
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-black/[0.08] text-ink-secondary">Init: ${Number(
                 ce.initial_score
               ).toFixed(1)}</span>
-              <span>&rarr;</span>
-              <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 font-bold">Final: ${Number(
+              <span class="text-ink-muted">&rarr;</span>
+              <span class="px-3 py-1 rounded-lg bg-ink text-white font-semibold">Final: ${Number(
                 finalScore
               ).toFixed(1)} / ${Number(ce.max_points).toFixed(1)}</span>
-              <span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">${escapeHtml(verdict)}</span>
+              <span class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-800 border border-indigo-200/70 text-[11px]">${escapeHtml(
+                verdict
+              )}</span>
             </div>
           </div>
 
-          <p class="text-slate-700"><span class="font-semibold">Rationale:</span> ${escapeHtml(
+          <!-- Score Bar -->
+          <div class="w-full h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
+              1
+            )}%"></div>
+          </div>
+
+          <p class="text-ink text-xs leading-relaxed"><strong class="font-semibold">Scoring Rationale:</strong> ${escapeHtml(
             ce.rationale
           )}</p>
 
-          <div class="bg-slate-50 border-l-4 border-indigo-500 p-2.5 rounded-r space-y-1">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-800">
+          <div class="bg-white border-l-4 border-indigo-600 p-4 rounded-r-xl border border-black/[0.06] space-y-1.5">
+            <div class="text-[10px] font-mono font-semibold uppercase tracking-widest text-indigo-800">
               Chain-of-Thought Verification Trace
             </div>
-            <p class="text-slate-700 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${escapeHtml(
+            <p class="text-ink-secondary font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${escapeHtml(
               ce.chain_of_thought_trace
             )}</p>
           </div>
 
           ${
             quotesHtml
-              ? `<div class="space-y-1"><div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Student Evidence Quotes</div>${quotesHtml}</div>`
+              ? `<div class="space-y-1.5"><div class="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-muted">Verbatim Student Evidence</div>${quotesHtml}</div>`
               : ""
           }
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            <div class="bg-emerald-50/60 border border-emerald-200 rounded p-2">
-              <div class="text-[10px] font-bold uppercase text-emerald-800 mb-1">Strengths Observed</div>
-              <ul class="text-emerald-950 space-y-0.5">${strengthsHtml || "<li>None noted</li>"}</ul>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+            <div class="bg-emerald-50/60 border border-emerald-200/70 rounded-xl p-3.5">
+              <div class="text-[10px] font-mono font-semibold uppercase tracking-wider text-emerald-800 mb-1.5">Strengths Observed</div>
+              <ul class="text-emerald-950 space-y-1">${strengthsHtml || "<li>None noted</li>"}</ul>
             </div>
-            <div class="bg-rose-50/60 border border-rose-200 rounded p-2">
-              <div class="text-[10px] font-bold uppercase text-rose-800 mb-1">Flaws / Gaps Observed</div>
-              <ul class="text-rose-950 space-y-0.5">${flawsHtml || "<li>None noted</li>"}</ul>
+            <div class="bg-rose-50/60 border border-rose-200/70 rounded-xl p-3.5">
+              <div class="text-[10px] font-mono font-semibold uppercase tracking-wider text-rose-800 mb-1.5">Flaws / Gaps Observed</div>
+              <ul class="text-rose-950 space-y-1">${flawsHtml || "<li>None noted</li>"}</ul>
             </div>
           </div>
         </div>
@@ -458,12 +563,12 @@
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-3">
-        <div class="bg-slate-100 border border-slate-200 rounded-lg p-3">
-          <span class="font-semibold text-slate-800">Overall Comprehension Summary (${escapeHtml(
-            initialEval.submission_modality
-          )}):</span>
-          <span class="text-slate-700"> ${escapeHtml(initialEval.overall_comprehension_summary)}</span>
+      <div class="space-y-5 tab-content-enter">
+        <div class="bg-canvas border border-black/[0.07] rounded-2xl p-4 text-xs leading-relaxed">
+          <span class="font-mono uppercase text-[10px] tracking-wider text-indigo-700 font-semibold block mb-1">
+            Overall Comprehension Summary (${escapeHtml(initialEval.submission_modality)})
+          </span>
+          <span class="text-ink">${escapeHtml(initialEval.overall_comprehension_summary)}</span>
         </div>
         ${cardsHtml}
       </div>
@@ -474,60 +579,73 @@
     const panel = el("tab-panel-reflection");
     if (!panel) return;
     if (!reflectionAudit) {
-      panel.innerHTML = `<p class="text-slate-400 text-center py-8">No reflection audit log available.</p>`;
+      panel.innerHTML = `<p class="text-ink-muted text-center py-12 text-xs">No reflection audit log available.</p>`;
       return;
     }
 
     const checksHtml = (reflectionAudit.bias_checks_performed || [])
-      .map((c) => `<li class="flex items-center gap-2"><span class="text-indigo-600">&bull;</span><span>${escapeHtml(c)}</span></li>`)
+      .map(
+        (c) =>
+          `<li class="flex items-center gap-2 text-xs text-ink bg-canvas px-3 py-2 rounded-xl border border-black/[0.06]"><span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span><span>${escapeHtml(
+            c
+          )}</span></li>`
+      )
       .join("");
 
     const rowsHtml = (reflectionAudit.criterion_audits || [])
       .map(
         (ca) => `
-        <tr class="border-t border-slate-200">
-          <td class="py-2 px-2 font-mono font-bold text-slate-800">${escapeHtml(ca.criterion_id)}</td>
-          <td class="py-2 px-2 font-mono">${Number(ca.initial_score).toFixed(1)}</td>
-          <td class="py-2 px-2 font-mono font-bold text-indigo-700">${Number(ca.calibrated_score).toFixed(1)}</td>
-          <td class="py-2 px-2 font-mono">${escapeHtml(formatDelta(ca.adjustment_delta))}</td>
-          <td class="py-2 px-2"><span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300">${escapeHtml(
+        <tr class="border-t border-black/[0.07] hover:bg-canvas/50">
+          <td class="py-3 px-3 font-mono font-semibold text-ink">${escapeHtml(ca.criterion_id)}</td>
+          <td class="py-3 px-3 font-mono tabular-nums">${Number(ca.initial_score).toFixed(1)}</td>
+          <td class="py-3 px-3 font-mono font-semibold text-indigo-700 tabular-nums">${Number(
+            ca.calibrated_score
+          ).toFixed(1)}</td>
+          <td class="py-3 px-3 font-mono tabular-nums">${escapeHtml(
+            formatDelta(ca.adjustment_delta)
+          )}</td>
+          <td class="py-3 px-3"><span class="font-mono text-[10px] px-2 py-0.5 rounded-md bg-canvas border border-black/10">${escapeHtml(
             ca.audit_verdict
           )}</span></td>
-          <td class="py-2 px-2 text-slate-700">${escapeHtml(ca.bias_or_error_detected)}</td>
-          <td class="py-2 px-2 text-slate-600">${escapeHtml(ca.calibration_reasoning)}</td>
+          <td class="py-3 px-3 text-ink-secondary">${escapeHtml(ca.bias_or_error_detected)}</td>
+          <td class="py-3 px-3 text-ink-secondary">${escapeHtml(ca.calibration_reasoning)}</td>
         </tr>
       `
       )
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-4">
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1.5">
+      <div class="space-y-6 tab-content-enter">
+        <div class="bg-canvas border border-black/[0.07] rounded-2xl p-5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-semibold text-slate-800">Audit Status</span>
-            <span class="font-mono text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 font-bold">${escapeHtml(
+            <span class="font-editorial text-2xl text-ink">Meta-Evaluator Audit Verdict</span>
+            <span class="font-mono text-xs px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 font-semibold">${escapeHtml(
               reflectionAudit.audit_status
             )}</span>
           </div>
-          <p class="text-slate-700">${escapeHtml(reflectionAudit.overall_audit_summary)}</p>
+          <p class="text-xs text-ink-secondary leading-relaxed">${escapeHtml(
+            reflectionAudit.overall_audit_summary
+          )}</p>
         </div>
 
-        <div>
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Bias &amp; Calibration Checks Performed</h4>
-          <ul class="space-y-1 text-slate-700">${checksHtml}</ul>
+        <div class="space-y-2.5">
+          <h4 class="text-[11px] font-mono font-semibold uppercase tracking-widest text-ink-secondary">
+            Bias &amp; Calibration Checks Executed
+          </h4>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checksHtml}</ul>
         </div>
 
-        <div class="overflow-x-auto border border-slate-200 rounded-lg">
-          <table class="w-full text-left border-collapse text-[11px]">
-            <thead class="bg-slate-100 text-slate-700">
+        <div class="overflow-x-auto border border-black/[0.08] rounded-2xl bg-white">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-canvas text-ink-secondary font-mono text-[10px] uppercase tracking-wider">
               <tr>
-                <th class="py-2 px-2">ID</th>
-                <th class="py-2 px-2">Initial</th>
-                <th class="py-2 px-2">Calibrated</th>
-                <th class="py-2 px-2">Delta</th>
-                <th class="py-2 px-2">Verdict</th>
-                <th class="py-2 px-2">Bias / Error Detected</th>
-                <th class="py-2 px-2">Calibration Reasoning</th>
+                <th class="py-3 px-3">ID</th>
+                <th class="py-3 px-3">Initial</th>
+                <th class="py-3 px-3">Calibrated</th>
+                <th class="py-3 px-3">Delta</th>
+                <th class="py-3 px-3">Verdict</th>
+                <th class="py-3 px-3">Bias / Error Check</th>
+                <th class="py-3 px-3">Calibration Reasoning</th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -593,6 +711,8 @@
       if ([...select.options].some((o) => o.value === data.default_model)) {
         select.value = data.default_model;
       }
+      const pill = el("active-model-pill");
+      if (pill) pill.textContent = select.value;
     }
     const badge = el("env-key-badge");
     if (badge) {
@@ -643,7 +763,7 @@
     if (state.assignments.length > 0) {
       selectAssignment(state.assignments[0].id);
     }
-    showBanner("Sample assignments seeded and ready.");
+    showBanner("Sample benchmark assignments seeded and ready.");
   }
 
   function loadSampleSubmissionForActiveAssignment() {
@@ -672,7 +792,9 @@
       badge.textContent = `Loaded sample: ${sample.submission_filename}`;
       badge.classList.remove("hidden");
     }
-    showBanner(`Loaded sample submission for ${sample.student_name}.`);
+    showBanner(
+      `Loaded sample submission for ${sample.student_name}. Click "Run 4-Agent Evaluation" to begin.`
+    );
   }
 
   async function deleteAssignment(assignmentId) {
@@ -702,7 +824,11 @@
       const exists = state.assignments.some((a) => a.id === record.assignment_id);
       if (exists) selectAssignment(record.assignment_id);
     }
-    resetPipelineStepper(record.status === "completed" ? `Completed (${record.duration_ms} ms)` : record.status);
+    resetPipelineStepper(
+      record.status === "completed"
+        ? `Completed (${record.duration_ms} ms)`
+        : record.status
+    );
     if (record.status === "completed") {
       for (const stage of STAGES) {
         updateStageState(stage, "complete", "done");
@@ -737,14 +863,17 @@
 
     const submissionText = el("submission-text-input").value.trim();
     if (!submissionText) {
-      showBanner("Submission text cannot be empty.", true);
+      showBanner(
+        "Submission text cannot be empty. Click 'Auto-Fill Sample Submission' or drop a file first.",
+        true
+      );
       return;
     }
 
     const runBtn = el("run-eval-btn");
     runBtn.disabled = true;
 
-    resetPipelineStepper("Running...");
+    resetPipelineStepper("Running 4-Agent Pipeline...");
     state.livePartial = { rubric: null, initialEval: null, reflection: null, feedback: null };
 
     const payload = {
@@ -804,7 +933,8 @@
       const overall = el("pipeline-overall-status");
       if (overall) {
         overall.textContent = "Failed";
-        overall.className = "text-xs font-mono px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800";
+        overall.className =
+          "text-xs font-mono font-semibold px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200";
       }
     } finally {
       runBtn.disabled = false;
@@ -818,7 +948,7 @@
       if (overall) {
         overall.textContent = `Running: ${data.label || data.agent}`;
         overall.className =
-          "text-xs font-mono px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800";
+          "text-xs font-mono font-semibold px-3.5 py-1.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200";
       }
       return;
     }
@@ -854,7 +984,7 @@
       if (overall) {
         overall.textContent = `Completed in ${data.duration_ms} ms`;
         overall.className =
-          "text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+          "text-xs font-mono font-semibold px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 tabular-nums";
       }
       renderFullEvaluationRecord(data);
       return;
@@ -866,7 +996,7 @@
       if (overall) {
         overall.textContent = "Error";
         overall.className =
-          "text-xs font-mono px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800";
+          "text-xs font-mono font-semibold px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200";
       }
     }
   }
@@ -886,13 +1016,16 @@
         buttons.forEach((b) => {
           const active = b.getAttribute("data-tab") === target;
           b.className = active
-            ? "report-tab-btn px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 border-indigo-600 text-indigo-700 bg-white"
-            : "report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900";
+            ? "report-tab-btn btn-tactile px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 border-indigo-600 text-indigo-900 bg-white shadow-2xs"
+            : "report-tab-btn btn-tactile px-4 py-2.5 text-xs font-medium rounded-t-xl border-b-2 border-transparent text-ink-secondary hover:text-ink";
         });
         Object.entries(panels).forEach(([key, panel]) => {
           if (!panel) return;
           if (key === target) {
             panel.classList.remove("hidden");
+            panel.classList.remove("tab-content-enter");
+            void panel.offsetWidth;
+            panel.classList.add("tab-content-enter");
           } else {
             panel.classList.add("hidden");
           }
@@ -908,6 +1041,38 @@
     el("refresh-history-btn")?.addEventListener("click", fetchEvaluations);
     el("evaluate-form")?.addEventListener("submit", handleRunEvaluation);
 
+    // Settings popover
+    const settingsPopover = el("settings-popover");
+    el("toggle-settings-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      settingsPopover?.classList.toggle("hidden");
+    });
+    el("close-settings-btn")?.addEventListener("click", () => {
+      settingsPopover?.classList.add("hidden");
+    });
+    document.addEventListener("click", (e) => {
+      if (
+        settingsPopover &&
+        !settingsPopover.classList.contains("hidden") &&
+        !settingsPopover.contains(e.target) &&
+        !el("toggle-settings-btn")?.contains(e.target)
+      ) {
+        settingsPopover.classList.add("hidden");
+      }
+    });
+    el("model-select")?.addEventListener("change", (e) => {
+      const pill = el("active-model-pill");
+      if (pill) pill.textContent = e.target.value;
+    });
+
+    // History slide-over drawer
+    const historyDrawer = el("history-drawer-modal");
+    const openHistory = () => historyDrawer?.classList.remove("hidden");
+    const closeHistory = () => historyDrawer?.classList.add("hidden");
+    el("open-history-drawer-btn")?.addEventListener("click", openHistory);
+    el("close-history-drawer-btn")?.addEventListener("click", closeHistory);
+    el("history-drawer-backdrop")?.addEventListener("click", closeHistory);
+
     // Clear cached PDF bytes if user manually edits submission text
     el("submission-text-input")?.addEventListener("input", () => {
       state.submissionPdfBase64 = null;
@@ -919,14 +1084,14 @@
     dropzone?.addEventListener("click", () => fileInput?.click());
     dropzone?.addEventListener("dragover", (e) => {
       e.preventDefault();
-      dropzone.classList.add("border-indigo-500", "bg-indigo-50/40");
+      dropzone.classList.add("border-indigo-600", "bg-indigo-50/40");
     });
     dropzone?.addEventListener("dragleave", () => {
-      dropzone.classList.remove("border-indigo-500", "bg-indigo-50/40");
+      dropzone.classList.remove("border-indigo-600", "bg-indigo-50/40");
     });
     dropzone?.addEventListener("drop", (e) => {
       e.preventDefault();
-      dropzone.classList.remove("border-indigo-500", "bg-indigo-50/40");
+      dropzone.classList.remove("border-indigo-600", "bg-indigo-50/40");
       const file = e.dataTransfer?.files?.[0];
       if (file) handleStudentFileUpload(file);
     });
@@ -957,7 +1122,7 @@
         const idx = state.assignments.findIndex((a) => a.id === data.id);
         if (idx >= 0) state.assignments[idx] = data;
         selectAssignment(data.id);
-        showBanner("Structured rubric parsed and saved.");
+        showBanner("Structured rubric parsed and cached.");
       } finally {
         btn.disabled = false;
         btn.textContent = "Parse / Refresh Rubric";

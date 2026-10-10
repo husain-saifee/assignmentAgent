@@ -1,593 +1,1258 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Autonomous Academic Evaluation &amp; Feedback Agent</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root {
-      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    .btn-press {
-      transition: transform 150ms var(--ease-out), background-color 150ms ease, border-color 150ms ease;
-    }
-    .btn-press:active:not(:disabled) {
-      transform: scale(0.97);
-    }
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-  </style>
-</head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900">
-  <!-- Top Navigation Bar -->
-  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-inner">
-          A4
-        </div>
-        <div>
-          <h1 class="font-semibold text-base tracking-tight leading-tight">
-            Autonomous Academic Evaluation &amp; Feedback Agent
-          </h1>
-          <p class="text-xs text-slate-400">
-            4-Stage Multi-Agent Pipeline &bull; Rubric Parser &rarr; CoT Evaluator &rarr; Reflection Auditor &rarr; Feedback Synthesizer
-          </p>
-        </div>
-      </div>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assignment Evaluation Agent — Autonomous Academic Assessment Studio</title>
+    <!-- Designer Fonts: Instrument Serif (Editorial Display), Plus Jakarta Sans (UI), JetBrains Mono (Code/Telemetry) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ["'Instrument Serif'", "Georgia", "serif"],
+              sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+              mono: ["'JetBrains Mono'", "monospace"],
+            },
+            colors: {
+              canvas: {
+                DEFAULT: "#FAF8F5",
+                subtle: "#F3EFEA",
+                recessed: "#EBE6DF",
+              },
+              ink: {
+                DEFAULT: "#141413",
+                secondary: "#57544E",
+                muted: "#8C877E",
+              },
+              accent: {
+                DEFAULT: "#3730A3",
+                vibrant: "#4F46E5",
+                soft: "#EEF2FF",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
 
-      <div class="flex flex-wrap items-center gap-2.5">
-        <!-- Environment API Key Status Badge -->
-        <span id="env-key-badge" class="hidden items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          API Key Configured in .env
-        </span>
+      body {
+        background-color: #faf8f5;
+        background-image: radial-gradient(
+            ellipse 80% 50% at 50% -15%,
+            rgba(79, 70, 229, 0.06),
+            transparent
+          ),
+          radial-gradient(
+            ellipse 60% 40% at 90% 10%,
+            rgba(217, 119, 6, 0.04),
+            transparent
+          );
+        color: #141413;
+        font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
 
-        <!-- Browser API Key Override Input -->
-        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
-          <label for="api-key-input" class="text-xs text-slate-400 mr-2 whitespace-nowrap">Gemini Key:</label>
-          <input
-            id="api-key-input"
-            type="password"
-            placeholder="Optional if set in .env..."
-            class="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-40"
-          />
-        </div>
+      .font-editorial {
+        font-family: "Instrument Serif", Georgia, serif;
+        letter-spacing: -0.015em;
+      }
 
-        <!-- Gemini Model Selector -->
-        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
-          <label for="model-select" class="text-xs text-slate-400 mr-2 whitespace-nowrap">Model:</label>
-          <select
-            id="model-select"
-            class="bg-slate-800 text-xs text-white font-medium focus:outline-none cursor-pointer"
-          >
-            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-            <option value="gemini-3.8-flash">gemini-3.8-flash</option>
-            <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
-          </select>
-        </div>
+      .tabular-nums {
+        font-variant-numeric: tabular-nums;
+      }
 
-        <!-- Seed / Reset Sample Assignments Button -->
-        <button
-          id="seed-btn"
-          type="button"
-          class="btn-press text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg"
-        >
-          Seed / Reset Sample Assignments
-        </button>
+      /* Surface & Card Craft */
+      .studio-card {
+        background: #ffffff;
+        border: 1px solid rgba(20, 20, 19, 0.08);
+        box-shadow: 0 1px 2px rgba(20, 20, 19, 0.03),
+          0 10px 30px -6px rgba(20, 20, 19, 0.04);
+        transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out),
+          border-color 240ms var(--ease-out);
+      }
 
-        <!-- Load Sample Student Submission Button -->
-        <button
-          id="load-sample-btn"
-          type="button"
-          class="btn-press text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm"
-        >
-          Load Sample Student Submission
-        </button>
-      </div>
-    </div>
-  </header>
+      /* Tactile button physics (Emil Kowalski & Apple Design) */
+      .btn-tactile {
+        transition: transform 150ms var(--ease-out), background-color 180ms var(--ease-out),
+          box-shadow 180ms var(--ease-out), border-color 180ms var(--ease-out),
+          color 180ms var(--ease-out);
+      }
+      .btn-tactile:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .btn-tactile:hover:not(:disabled) {
+          transform: translateY(-1px);
+        }
+        .btn-tactile:active:not(:disabled) {
+          transform: translateY(0) scale(0.97);
+        }
+        .assign-card-item:hover {
+          border-color: rgba(79, 70, 229, 0.35);
+          transform: translateY(-1px);
+        }
+      }
 
-  <!-- Status Banner / Toast -->
-  <div id="status-banner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900">
-    <div class="max-w-[1600px] mx-auto flex items-center justify-between">
-      <span id="status-banner-text"></span>
-      <button id="status-banner-close" type="button" class="text-amber-700 hover:text-amber-950 font-semibold ml-4">&times;</button>
-    </div>
-  </div>
+      /* Staggered reveal animation */
+      @keyframes revealUp {
+        0% {
+          opacity: 0;
+          transform: translateY(10px) scale(0.985);
+          filter: blur(2px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
 
-  <!-- Main 3-Column Academic Workspace -->
-  <main class="max-w-[1600px] w-full mx-auto px-4 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-    <!-- Left Column: Saved Assignments & Past Evaluations (3 cols) -->
-    <aside class="lg:col-span-3 flex flex-col gap-4">
-      <!-- Saved Assignments Card -->
-      <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-800">Saved Assignments</h2>
-            <p class="text-[11px] text-slate-500">Select an assignment to evaluate</p>
-          </div>
-          <button
-            id="open-new-assignment-btn"
-            type="button"
-            class="btn-press text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg"
-          >
-            + New Assignment
-          </button>
-        </div>
-        <div id="assignments-list" class="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-          <div class="p-4 text-xs text-slate-400 text-center">Loading assignments...</div>
-        </div>
-      </section>
+      .animate-reveal {
+        animation: revealUp 380ms var(--ease-out) both;
+        animation-delay: calc(var(--stagger, 0) * 55ms);
+      }
 
-      <!-- Past Evaluations History Card -->
-      <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-800">Past Evaluations</h2>
-            <p class="text-[11px] text-slate-500">Click any run to inspect its full report</p>
-          </div>
-          <button
-            id="refresh-history-btn"
-            type="button"
-            class="btn-press text-xs text-slate-600 hover:text-slate-900 px-2 py-1 rounded border border-slate-200 bg-white"
-          >
-            Refresh
-          </button>
-        </div>
-        <div id="evaluations-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
-          <div class="p-4 text-xs text-slate-400 text-center">No evaluations recorded yet.</div>
-        </div>
-      </section>
-    </aside>
+      @keyframes tabFadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(6px);
+          filter: blur(1.5px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
+      }
 
-    <!-- Middle Column: Assignment & Rubric Viewer + Student Submission Input (4 cols) -->
-    <section class="lg:col-span-4 flex flex-col gap-4">
-      <!-- Assignment & Structured Rubric Viewer -->
-      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span id="active-assignment-badge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                HYBRID
-              </span>
-              <h2 id="active-assignment-title" class="text-sm font-semibold text-slate-800 truncate">
-                Select or Seed an Assignment
-              </h2>
-            </div>
-          </div>
-          <button
-            id="reparse-rubric-btn"
-            type="button"
-            class="btn-press text-xs font-medium text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md border border-indigo-200 whitespace-nowrap"
-          >
-            Parse / Refresh Rubric
-          </button>
-        </div>
+      .tab-content-enter {
+        animation: tabFadeIn 240ms var(--ease-out) forwards;
+      }
 
-        <div class="p-4 space-y-3 max-h-[420px] overflow-y-auto text-xs">
-          <div>
-            <h3 class="font-semibold text-slate-700 uppercase tracking-wider text-[11px] mb-1">Assignment Prompt</h3>
-            <div
-              id="active-assignment-prompt"
-              class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-700 whitespace-pre-wrap font-sans leading-relaxed"
-            >No assignment selected.</div>
-          </div>
+      /* Animated SVG Checkmark draw */
+      @keyframes drawCheck {
+        0% {
+          stroke-dashoffset: 24;
+        }
+        100% {
+          stroke-dashoffset: 0;
+        }
+      }
 
-          <details class="group border border-slate-200 rounded-lg bg-slate-50/50">
-            <summary class="px-3 py-2 font-semibold text-slate-700 cursor-pointer select-none flex items-center justify-between">
-              <span>Structured Rubric Criteria &amp; Scoring Bands</span>
-              <span id="rubric-points-badge" class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">0 pts</span>
-            </summary>
-            <div id="active-rubric-container" class="p-3 border-t border-slate-200 space-y-2.5 bg-white">
-              <p class="text-slate-400">Rubric will be parsed automatically on first evaluation or when you click "Parse / Refresh Rubric".</p>
-            </div>
-          </details>
+      .svg-check-draw {
+        stroke-dasharray: 24;
+        stroke-dashoffset: 0;
+        animation: drawCheck 360ms var(--ease-out) forwards;
+      }
 
-          <details class="group border border-slate-200 rounded-lg bg-slate-50/50">
-            <summary class="px-3 py-2 font-semibold text-slate-700 cursor-pointer select-none">
-              Reference Solution / Exemplar Notes
-            </summary>
-            <pre
-              id="active-assignment-reference"
-              class="p-3 border-t border-slate-200 bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap"
-            >None provided.</pre>
-          </details>
-        </div>
-      </div>
+      /* Active Agent Stage Pulse & Shimmer */
+      @keyframes stagePulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.2),
+            0 8px 20px -4px rgba(79, 70, 229, 0.12);
+        }
+        50% {
+          box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08),
+            0 12px 24px -4px rgba(79, 70, 229, 0.18);
+        }
+      }
 
-      <!-- Student Submission Input Card -->
-      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-800">Student Submission</h2>
-            <p class="text-[11px] text-slate-500">Upload code, notebook, Markdown, or PDF, or paste directly</p>
-          </div>
-          <span id="ingested-file-badge" class="hidden text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded"></span>
-        </div>
+      .stage-running-glow {
+        animation: stagePulse 2s infinite var(--ease-out);
+      }
 
-        <form id="evaluate-form" class="p-4 space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label for="student-name-input" class="block text-xs font-medium text-slate-700 mb-1">Student Name</label>
-              <input
-                id="student-name-input"
-                type="text"
-                required
-                value="Anonymous Student"
-                class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label for="student-id-input" class="block text-xs font-medium text-slate-700 mb-1">Student ID</label>
-              <input
-                id="student-id-input"
-                type="text"
-                placeholder="e.g. STU-4082"
-                class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
+      /* Slide-over drawer transitions */
+      .drawer-backdrop {
+        transition: opacity 280ms var(--ease-out);
+      }
+      .drawer-panel {
+        transition: transform 360ms var(--ease-drawer);
+      }
 
-          <!-- File Dropzone / Picker -->
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(20, 20, 19, 0.15);
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(20, 20, 19, 0.28);
+      }
+
+      /* Reduced Motion Support */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+    <!-- Top Editorial Navigation Bar -->
+    <header
+      class="sticky top-0 z-30 bg-[#FAF8F5]/85 backdrop-blur-xl border-b border-black/[0.07]"
+    >
+      <div
+        class="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 h-20 flex items-center justify-between gap-4"
+      >
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-4">
           <div
-            id="submission-dropzone"
-            class="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-lg p-3 text-center bg-slate-50/70 transition-colors cursor-pointer"
+            class="w-10 h-10 rounded-xl bg-ink text-[#FAF8F5] flex items-center justify-center shadow-sm border border-black/10 shrink-0"
           >
-            <input
-              id="submission-file-input"
-              type="file"
-              accept=".pdf,.py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs,.go,.rs,.sql,.sh,.ipynb,.md,.txt,.json,.yaml,.yml,.csv,.html,.css"
-              class="hidden"
-            />
-            <p class="text-xs font-medium text-slate-700">
-              Drop student file here or <span class="text-indigo-600 underline">browse file</span>
-            </p>
-            <p class="text-[11px] text-slate-400 mt-0.5">
-              Supports .py, .js, .ts, .java, .cpp, .ipynb, .pdf, .md, .txt (up to 15 MB)
-            </p>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label for="submission-text-input" class="block text-xs font-medium text-slate-700">
-                Submission Code / Written Response
-              </label>
-              <input
-                id="submission-filename-input"
-                type="text"
-                value="submission.txt"
-                class="text-[11px] font-mono text-slate-600 border border-slate-200 rounded px-2 py-0.5 w-44 text-right"
-                title="Submission filename"
-              />
-            </div>
-            <textarea
-              id="submission-text-input"
-              rows="11"
-              required
-              placeholder="Paste student code or theoretical response here, or click 'Load Sample Student Submission' in the top bar..."
-              class="w-full text-xs font-mono bg-slate-900 text-slate-100 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-            ></textarea>
-          </div>
-
-          <div class="flex items-center justify-between pt-1">
-            <label class="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-              <input id="force-reparse-checkbox" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-              <span>Force re-parse rubric in Stage 1</span>
-            </label>
-
-            <button
-              id="run-eval-btn"
-              type="submit"
-              class="btn-press bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2"
+            <svg
+              class="w-5 h-5 text-indigo-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
             >
-              <span>Run 4-Agent Evaluation</span>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+              />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h1 class="font-editorial text-2xl sm:text-[26px] text-ink leading-none">
+                Assignment Evaluation Agent
+              </h1>
+              <span
+                class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-canvas-subtle text-ink-secondary border border-black/[0.08]"
+              >
+                4-Agent CoT Studio
+              </span>
+            </div>
+            <p class="text-xs text-ink-secondary mt-0.5 hidden md:block">
+              Autonomous rubric parsing, semantic trace verification, bias calibration &amp; pedagogical synthesis
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Controls: Model Config, Quick Demo, History Drawer -->
+        <div class="flex items-center gap-3">
+          <!-- Server API Key Status Pill -->
+          <span
+            id="env-key-badge"
+            class="hidden items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80"
+            title="Server .env GEMINI_API_KEY is active"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="hidden sm:inline">Gemini Key Active</span>
+          </span>
+
+          <!-- Model & API Key Settings Dropdown Trigger -->
+          <div class="relative">
+            <button
+              id="toggle-settings-btn"
+              type="button"
+              class="btn-tactile flex items-center gap-2 text-xs font-medium bg-white hover:bg-canvas-subtle text-ink px-3.5 py-2 rounded-xl border border-black/[0.09] shadow-2xs"
+            >
+              <svg
+                class="w-4 h-4 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <span id="active-model-pill" class="font-mono text-[11px]">gemini-2.5-flash</span>
+              <svg class="w-3.5 h-3.5 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
-          </div>
-        </form>
-      </div>
-    </section>
 
-    <!-- Right Column: Live 4-Stage Pipeline Stepper, Score Hero Card, and 4 Report Tabs (5 cols) -->
-    <section class="lg:col-span-5 flex flex-col gap-4">
-      <!-- Live 4-Stage Agent Pipeline Stepper -->
-      <div class="bg-white border border-slate-200 rounded-xl shadow-xs p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-800">Live 4-Stage Agent Pipeline</h2>
-            <p class="text-[11px] text-slate-500">Real-time Server-Sent Events (SSE) execution telemetry</p>
-          </div>
-          <span id="pipeline-overall-status" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-            Idle
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2" id="pipeline-stepper">
-          <!-- Stage 1 -->
-          <div id="stage-card-rubric_parser" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">1. Rubric Parser</span>
-              <span id="stage-badge-rubric_parser" class="text-[10px] font-mono text-slate-400">pending</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Normalizes criteria &amp; scoring bands</p>
-          </div>
-
-          <!-- Stage 2 -->
-          <div id="stage-card-cot_evaluator" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">2. CoT Evaluator</span>
-              <span id="stage-badge-cot_evaluator" class="text-[10px] font-mono text-slate-400">pending</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Static/semantic trace &amp; evidence quotes</p>
-          </div>
-
-          <!-- Stage 3 -->
-          <div id="stage-card-reflection_auditor" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">3. Reflection Auditor</span>
-              <span id="stage-badge-reflection_auditor" class="text-[10px] font-mono text-slate-400">pending</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Audits bias, double penalties &amp; bounds</p>
-          </div>
-
-          <!-- Stage 4 -->
-          <div id="stage-card-feedback_synthesizer" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">4. Feedback Synth</span>
-              <span id="stage-badge-feedback_synthesizer" class="text-[10px] font-mono text-slate-400">pending</span>
-            </div>
-            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Synthesizes gaps &amp; revision roadmap</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Score & Calibration Hero Card -->
-      <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl shadow-sm p-4 border border-indigo-900/60">
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-indigo-800/50">
-          <div>
-            <span class="text-[10px] uppercase tracking-widest text-indigo-300 font-semibold">Calibrated Evaluation Summary</span>
-            <h3 id="report-student-header" class="text-sm font-semibold text-white">No Evaluation Selected</h3>
-          </div>
-          <span id="report-audit-badge" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-200 border border-indigo-700">
-            Awaiting Run
-          </span>
-        </div>
-
-        <div class="grid grid-cols-5 gap-2 text-center">
-          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
-            <div class="text-[10px] uppercase tracking-wider text-slate-300">Initial Score</div>
-            <div id="hero-initial-score" class="text-base font-bold font-mono text-slate-100 mt-0.5">&mdash;</div>
-          </div>
-          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
-            <div class="text-[10px] uppercase tracking-wider text-slate-300">Calibration &Delta;</div>
-            <div id="hero-calibration-delta" class="text-base font-bold font-mono text-amber-300 mt-0.5">&mdash;</div>
-          </div>
-          <div class="bg-indigo-500/20 rounded-lg p-2.5 border border-indigo-400/40">
-            <div class="text-[10px] uppercase tracking-wider text-indigo-200">Final Score</div>
-            <div id="hero-final-score" class="text-base font-bold font-mono text-white mt-0.5">&mdash;</div>
-          </div>
-          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
-            <div class="text-[10px] uppercase tracking-wider text-slate-300">Percentage</div>
-            <div id="hero-percentage" class="text-base font-bold font-mono text-emerald-300 mt-0.5">&mdash;</div>
-          </div>
-          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
-            <div class="text-[10px] uppercase tracking-wider text-slate-300">Letter Grade</div>
-            <div id="hero-letter-grade" class="text-lg font-extrabold font-mono text-white mt-0.5">&mdash;</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4 Report Tabs Card -->
-      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden flex-1 flex flex-col">
-        <div class="border-b border-slate-200 bg-slate-50 px-2 pt-2 flex flex-wrap gap-1" role="tablist">
-          <button
-            type="button"
-            data-tab="feedback"
-            class="report-tab-btn px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 border-indigo-600 text-indigo-700 bg-white"
-          >
-            1. Personalized Feedback &amp; Gaps
-          </button>
-          <button
-            type="button"
-            data-tab="criteria"
-            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
-          >
-            2. Criterion Breakdown &amp; CoT Trace
-          </button>
-          <button
-            type="button"
-            data-tab="reflection"
-            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
-          >
-            3. Reflection &amp; Bias Audit Log
-          </button>
-          <button
-            type="button"
-            data-tab="export"
-            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
-          >
-            4. Export Report
-          </button>
-        </div>
-
-        <div class="p-4 flex-1 max-h-[560px] overflow-y-auto text-xs">
-          <!-- Tab 1: Personalized Feedback & Learning Gaps -->
-          <div id="tab-panel-feedback" class="report-tab-panel space-y-4">
-            <p class="text-slate-400 text-center py-8">
-              Run an evaluation or select a past evaluation from the left panel to view personalized pedagogical feedback.
-            </p>
-          </div>
-
-          <!-- Tab 2: Criterion Breakdown & CoT Reasoning Trace -->
-          <div id="tab-panel-criteria" class="report-tab-panel hidden space-y-4">
-            <p class="text-slate-400 text-center py-8">
-              Criterion-by-criterion evaluations, mental execution traces, and student evidence quotes will appear here.
-            </p>
-          </div>
-
-          <!-- Tab 3: Reflection & Bias Audit Log -->
-          <div id="tab-panel-reflection" class="report-tab-panel hidden space-y-4">
-            <p class="text-slate-400 text-center py-8">
-              Reflection audit verdicts, bias checks, and score calibration details will appear here.
-            </p>
-          </div>
-
-          <!-- Tab 4: Export Report -->
-          <div id="tab-panel-export" class="report-tab-panel hidden space-y-4">
-            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-              <h3 class="text-sm font-semibold text-slate-800">Export Complete Evaluation Report</h3>
-              <p class="text-xs text-slate-600">
-                Download a structured Markdown report for LMS / GitHub feedback or open a print-ready HTML/PDF report in a new tab.
-              </p>
-              <div class="flex flex-wrap gap-3 pt-1">
-                <a
-                  id="export-md-link"
-                  href="#"
-                  class="btn-press pointer-events-none opacity-50 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-2"
+            <!-- Popover Panel for Model & API Key -->
+            <div
+              id="settings-popover"
+              class="hidden absolute right-0 mt-2.5 w-80 sm:w-96 studio-card rounded-2xl p-5 z-50 shadow-xl"
+            >
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-black/[0.06]">
+                <div>
+                  <h3 class="text-sm font-semibold text-ink">Engine &amp; Credentials</h3>
+                  <p class="text-xs text-ink-secondary">Configure the Gemini reasoning model</p>
+                </div>
+                <button
+                  id="close-settings-btn"
+                  type="button"
+                  class="text-ink-muted hover:text-ink p-1 rounded-lg"
                 >
-                  Download .md Report
-                </a>
-                <a
-                  id="export-html-link"
-                  href="#"
-                  target="_blank"
-                  rel="noopener"
-                  class="btn-press pointer-events-none opacity-50 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-2"
-                >
-                  Open Printable HTML / PDF Report
-                </a>
+                  &times;
+                </button>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label
+                    for="model-select"
+                    class="block text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-1.5"
+                  >
+                    Gemini Reasoning Model
+                  </label>
+                  <select
+                    id="model-select"
+                    class="w-full text-xs font-mono bg-canvas border border-black/15 rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="gemini-2.5-flash">gemini-2.5-flash (Fast &amp; Balanced)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro (Deep Reasoning)</option>
+                    <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+                    <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    for="api-key-input"
+                    class="block text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-1.5"
+                  >
+                    API Key Override <span class="text-ink-muted font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    id="api-key-input"
+                    type="password"
+                    placeholder="Uses server .env key if left blank..."
+                    class="w-full text-xs font-mono bg-canvas border border-black/15 rounded-xl px-3.5 py-2.5 text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p class="text-[11px] text-ink-muted mt-1.5 leading-relaxed">
+                    Sent via <code class="font-mono">X-Gemini-Key</code> header only for your active browser session.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-  </main>
 
-  <!-- "+ New Assignment" Modal -->
-  <div
-    id="new-assignment-modal"
-    class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
-  >
-    <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full shadow-xl overflow-hidden">
-      <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-        <h2 class="text-sm font-semibold text-slate-800">Create New Assignment</h2>
-        <button id="close-new-assignment-btn" type="button" class="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
-      </div>
-
-      <form id="new-assignment-form" class="p-5 space-y-3 text-xs max-h-[82vh] overflow-y-auto">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="sm:col-span-2">
-            <label for="new-assign-title" class="block font-medium text-slate-700 mb-1">Assignment Title</label>
-            <input
-              id="new-assign-title"
-              type="text"
-              required
-              placeholder="e.g. CS301: Binary Heap Implementation"
-              class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label for="new-assign-type" class="block font-medium text-slate-700 mb-1">Modality</label>
-            <select
-              id="new-assign-type"
-              class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          <!-- Past Evaluations Archive Drawer Button -->
+          <button
+            id="open-history-drawer-btn"
+            type="button"
+            class="btn-tactile flex items-center gap-2 text-xs font-semibold bg-white hover:bg-canvas-subtle text-ink px-3.5 py-2 rounded-xl border border-black/[0.09] shadow-2xs"
+          >
+            <svg
+              class="w-4 h-4 text-ink-secondary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
             >
-              <option value="hybrid">hybrid</option>
-              <option value="code">code</option>
-              <option value="theory">theory</option>
-            </select>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>History</span>
+            <span
+              id="history-count-badge"
+              class="font-mono text-[11px] px-1.5 py-0.2 rounded-md bg-canvas-subtle text-ink-secondary tabular-nums"
+            >
+              0
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Notification Toast / Banner -->
+    <div id="status-banner" class="hidden max-w-[1400px] w-full mx-auto px-6 sm:px-10 lg:px-14 pt-5">
+      <div
+        id="status-banner-inner"
+        class="rounded-2xl px-5 py-3.5 text-sm flex items-center justify-between border shadow-sm transition-all"
+      >
+        <span id="status-banner-text" class="font-medium"></span>
+        <button
+          id="status-banner-close"
+          type="button"
+          class="text-xs font-semibold uppercase tracking-wider opacity-75 hover:opacity-100 ml-4 px-2 py-1 rounded-lg"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Studio Container (Generous Negative Space) -->
+    <main class="max-w-[1400px] w-full mx-auto px-6 sm:px-10 lg:px-14 py-8 lg:py-12 flex-1 space-y-10">
+      <!-- Editorial Onboarding Strip: Explains the 3-Step Workflow Clearly -->
+      <section
+        class="studio-card rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-white via-white to-[#FAF6F0] animate-reveal"
+        style="--stagger: 0"
+      >
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-black/[0.06]">
+          <div class="max-w-2xl space-y-1.5">
+            <div class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-indigo-700 font-semibold">
+              <span>Multi-Agent Academic Grading Architecture</span>
+            </div>
+            <h2 class="font-editorial text-3xl sm:text-4xl text-ink tracking-tight leading-tight">
+              Objective, bias-audited assessment in three guided steps.
+            </h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              id="load-sample-btn"
+              type="button"
+              class="btn-tactile inline-flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100/80 text-indigo-900 border border-indigo-200/80"
+            >
+              <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Auto-Fill Sample Submission</span>
+            </button>
+            <button
+              id="open-new-assignment-btn"
+              type="button"
+              class="btn-tactile inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl bg-white hover:bg-canvas-subtle text-ink border border-black/10"
+            >
+              <span>+ New Assignment</span>
+            </button>
+            <button
+              id="seed-btn"
+              type="button"
+              class="btn-tactile text-xs font-medium px-3 py-2.5 rounded-xl text-ink-secondary hover:text-ink hover:bg-canvas-subtle"
+              title="Re-seed default sample assignments"
+            >
+              Reset Demos
+            </button>
           </div>
         </div>
 
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label for="new-assign-prompt" class="font-medium text-slate-700">Assignment Prompt / Instructions</label>
-            <label class="text-indigo-600 hover:underline cursor-pointer">
-              <span>Upload .pdf / .md / .txt</span>
-              <input id="new-assign-prompt-file" type="file" accept=".pdf,.md,.txt" class="hidden" />
-            </label>
+        <!-- 3-Step Visual Guide -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+          <div class="flex items-start gap-3.5">
+            <span
+              class="font-editorial text-2xl leading-none w-8 h-8 rounded-full bg-ink text-white flex items-center justify-center shrink-0"
+            >
+              1
+            </span>
+            <div>
+              <h3 class="text-sm font-semibold text-ink">Select Assignment &amp; Rubric</h3>
+              <p class="text-xs text-ink-secondary leading-relaxed mt-0.5">
+                Choose a pre-loaded CS benchmark (Code or Theory) or create your own prompt and grading rubric.
+              </p>
+            </div>
           </div>
-          <textarea
-            id="new-assign-prompt"
-            rows="4"
-            required
-            placeholder="Describe the problem statement and requirements..."
-            class="w-full border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          ></textarea>
+          <div class="flex items-start gap-3.5">
+            <span
+              class="font-editorial text-2xl leading-none w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0"
+            >
+              2
+            </span>
+            <div>
+              <h3 class="text-sm font-semibold text-ink">Provide Student Submission</h3>
+              <p class="text-xs text-ink-secondary leading-relaxed mt-0.5">
+                Drop a <code class="font-mono text-[11px]">.py</code>, <code class="font-mono text-[11px]">.ipynb</code>, or <code class="font-mono text-[11px]">.pdf</code> file—or click <em>Auto-Fill Sample Submission</em> to test immediately.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3.5">
+            <span
+              class="font-editorial text-2xl leading-none w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0"
+            >
+              3
+            </span>
+            <div>
+              <h3 class="text-sm font-semibold text-ink">Stream 4-Agent Verification</h3>
+              <p class="text-xs text-ink-secondary leading-relaxed mt-0.5">
+                Watch the Rubric Parser, CoT Evaluator, Bias Auditor, and Feedback Coach build a calibrated grade report.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Core 2-Zone Asymmetric Studio Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <!-- LEFT ZONE (5 Cols): Step 1 (Assignment Context) + Step 2 (Student Submission) -->
+        <div class="lg:col-span-5 space-y-8">
+          <!-- STEP 01 CARD: Active Assignment & Rubric Context -->
+          <section
+            class="studio-card rounded-3xl p-6 sm:p-8 space-y-6 animate-reveal"
+            style="--stagger: 1"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="font-mono text-[11px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-canvas-subtle text-ink-secondary">
+                  Step 01
+                </span>
+                <h2 class="font-editorial text-2xl text-ink">Assignment Benchmark</h2>
+              </div>
+              <span
+                id="assignment-type-badge"
+                class="text-[11px] font-mono font-semibold uppercase px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60"
+              >
+                --
+              </span>
+            </div>
+
+            <!-- Assignment Selector List -->
+            <div>
+              <label class="block text-xs font-medium text-ink-secondary mb-2">
+                Select Active Course Assignment
+              </label>
+              <div
+                id="assignments-list"
+                class="space-y-2.5 max-h-60 overflow-y-auto pr-1"
+              >
+                <div class="text-sm text-ink-muted py-4 text-center">
+                  Loading assignments...
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Assignment Summary Box + Expandable Specification Inspector -->
+            <div class="rounded-2xl bg-canvas p-5 border border-black/[0.06] space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-ink-muted">
+                    Selected Specification
+                  </div>
+                  <h3
+                    id="assignment-detail-title"
+                    class="font-editorial text-2xl text-ink leading-snug mt-0.5"
+                  >
+                    Select an Assignment
+                  </h3>
+                </div>
+                <button
+                  id="reparse-rubric-btn"
+                  type="button"
+                  class="btn-tactile shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-xl bg-white hover:bg-canvas-subtle text-ink border border-black/10 shadow-2xs"
+                >
+                  Parse / Refresh Rubric
+                </button>
+              </div>
+
+              <!-- Collapsible Inspector for Prompt, Structured Rubric & Reference Solution -->
+              <details class="group pt-2 border-t border-black/[0.06]">
+                <summary
+                  class="cursor-pointer list-none flex items-center justify-between text-xs font-semibold text-indigo-700 hover:text-indigo-900 select-none py-1"
+                >
+                  <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4 transition-transform duration-200 group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span>Inspect Assignment Prompt, Rubric Bands &amp; Reference</span>
+                  </span>
+                  <span class="text-[11px] font-mono text-ink-muted group-open:hidden">Expand</span>
+                  <span class="text-[11px] font-mono text-ink-muted hidden group-open:inline">Collapse</span>
+                </summary>
+
+                <div class="mt-4 space-y-5 text-xs">
+                  <!-- Prompt -->
+                  <div class="space-y-1.5">
+                    <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">
+                      Assignment Prompt &amp; Instructions
+                    </div>
+                    <div
+                      id="assignment-prompt-view"
+                      class="p-3.5 rounded-xl bg-white border border-black/[0.07] text-ink-secondary whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"
+                    >
+                      No assignment selected.
+                    </div>
+                  </div>
+
+                  <!-- Structured Rubric Criteria -->
+                  <div class="space-y-1.5">
+                    <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">
+                      Parsed Rubric Criteria &amp; Scoring Bands
+                    </div>
+                    <div
+                      id="structured-rubric-view"
+                      class="p-3.5 rounded-xl bg-white border border-black/[0.07] space-y-2.5 max-h-72 overflow-y-auto"
+                    >
+                      No rubric parsed yet.
+                    </div>
+                  </div>
+
+                  <!-- Reference Solution -->
+                  <div class="space-y-1.5">
+                    <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">
+                      Educator Reference Solution / Benchmark Notes
+                    </div>
+                    <pre
+                      id="assignment-reference-view"
+                      class="p-3.5 rounded-xl bg-[#141413] text-stone-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"
+                    >No reference solution provided.</pre>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <!-- STEP 02 CARD: Student Submission Studio -->
+          <section
+            class="studio-card rounded-3xl p-6 sm:p-8 space-y-6 animate-reveal"
+            style="--stagger: 2"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="font-mono text-[11px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700">
+                  Step 02
+                </span>
+                <h2 class="font-editorial text-2xl text-ink">Student Submission</h2>
+              </div>
+              <span class="text-xs text-ink-muted">Code, Notebook, or PDF</span>
+            </div>
+
+            <form id="evaluate-form" class="space-y-5">
+              <!-- Student Metadata -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    for="student-name-input"
+                    class="block text-xs font-medium text-ink-secondary mb-1.5"
+                  >
+                    Student Name
+                  </label>
+                  <input
+                    id="student-name-input"
+                    type="text"
+                    required
+                    value="Alex Rivera"
+                    class="w-full text-sm bg-canvas border border-black/12 rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+                  />
+                </div>
+                <div>
+                  <label
+                    for="student-id-input"
+                    class="block text-xs font-medium text-ink-secondary mb-1.5"
+                  >
+                    Student ID
+                  </label>
+                  <input
+                    id="student-id-input"
+                    type="text"
+                    value="STU-2049"
+                    class="w-full text-sm font-mono bg-canvas border border-black/12 rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+
+              <!-- Tactile File Upload Dropzone -->
+              <div>
+                <div
+                  id="submission-dropzone"
+                  class="group border-2 border-dashed border-black/15 hover:border-indigo-500 rounded-2xl p-5 text-center cursor-pointer transition-all bg-canvas/70 hover:bg-indigo-50/30"
+                >
+                  <input
+                    id="submission-file-input"
+                    type="file"
+                    accept=".py,.js,.ts,.java,.cpp,.c,.cs,.go,.rs,.sql,.sh,.md,.txt,.json,.yaml,.yml,.csv,.html,.css,.ipynb,.pdf"
+                    class="hidden"
+                  />
+                  <div class="w-10 h-10 rounded-xl bg-white border border-black/10 shadow-2xs mx-auto flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  </div>
+                  <div class="text-sm font-semibold text-ink">
+                    Drop student file here or <span class="text-indigo-600 underline decoration-indigo-300 underline-offset-2">browse disk</span>
+                  </div>
+                  <div class="text-xs text-ink-muted mt-1">
+                    Supports <span class="font-mono">.py, .ipynb, .pdf, .md, .txt, .java, .cpp, .sql</span> (up to 15 MB)
+                  </div>
+                  <div
+                    id="ingested-file-badge"
+                    class="hidden mt-3 inline-flex items-center gap-1.5 text-xs font-mono font-medium bg-indigo-100 text-indigo-900 px-3 py-1 rounded-full"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Filename & Source Editor -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <label
+                    for="submission-text-input"
+                    class="text-xs font-medium text-ink-secondary"
+                  >
+                    Submission Content / Extracted Artifact
+                  </label>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] text-ink-muted">File:</span>
+                    <input
+                      id="submission-filename-input"
+                      type="text"
+                      value="submission.py"
+                      aria-label="Submission Filename"
+                      class="text-xs font-mono bg-canvas border border-black/12 rounded-lg px-2.5 py-1 text-ink w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <textarea
+                  id="submission-text-input"
+                  rows="10"
+                  required
+                  placeholder="Paste student code, markdown essay, or upload a file (.py, .ipynb, .pdf) above..."
+                  class="w-full text-xs font-mono leading-relaxed bg-[#141413] text-stone-100 placeholder:text-stone-500 border border-black/20 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                ></textarea>
+              </div>
+
+              <!-- Options & Primary CTA -->
+              <div class="pt-1 space-y-4">
+                <label class="flex items-center gap-2.5 text-xs text-ink-secondary cursor-pointer select-none">
+                  <input
+                    id="force-reparse-checkbox"
+                    type="checkbox"
+                    class="rounded border-black/20 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  />
+                  <span>Force fresh rubric parsing before grading</span>
+                </label>
+
+                <button
+                  id="run-eval-btn"
+                  type="submit"
+                  class="btn-tactile w-full bg-ink hover:bg-indigo-950 disabled:opacity-50 text-white font-semibold text-sm py-3.5 px-6 rounded-2xl shadow-md flex items-center justify-center gap-2.5"
+                >
+                  <svg class="w-4 h-4 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                  </svg>
+                  <span>Run 4-Agent Evaluation</span>
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
 
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label for="new-assign-rubric" class="font-medium text-slate-700">
-              Raw Rubric Notes <span class="text-slate-400 font-normal">(Leave blank to auto-synthesize from prompt)</span>
-            </label>
-            <label class="text-indigo-600 hover:underline cursor-pointer">
-              <span>Upload .pdf / .md / .txt</span>
-              <input id="new-assign-rubric-file" type="file" accept=".pdf,.md,.txt" class="hidden" />
-            </label>
+        <!-- RIGHT ZONE (7 Cols): Step 03 Live 4-Agent Telemetry + Editorial Assessment Report -->
+        <div class="lg:col-span-7 space-y-8">
+          <!-- LIVE 4-STAGE AGENT PIPELINE TELEMETRY -->
+          <section
+            class="studio-card rounded-3xl p-6 sm:p-8 space-y-6 animate-reveal"
+            style="--stagger: 2"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2.5">
+                  <span class="font-mono text-[11px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
+                    Step 03
+                  </span>
+                  <h2 class="font-editorial text-2xl text-ink">
+                    Autonomous 4-Agent Pipeline
+                  </h2>
+                </div>
+                <p class="text-xs text-ink-secondary mt-1">
+                  Real-time Server-Sent Events (SSE) telemetry as each specialized agent completes its verification pass.
+                </p>
+              </div>
+              <span
+                id="pipeline-overall-status"
+                class="text-xs font-mono font-medium px-3.5 py-1.5 rounded-full bg-canvas-subtle text-ink-secondary tabular-nums border border-black/[0.06]"
+              >
+                Idle · Ready
+              </span>
+            </div>
+
+            <!-- 4-Agent Architectural Nodes Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="pipeline-stepper">
+              <!-- Stage 1: Rubric Parser -->
+              <div
+                id="stage-rubric_parser"
+                class="stage-card border border-black/[0.08] rounded-2xl p-4 bg-canvas/60 transition-all duration-300"
+              >
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-muted">
+                    Agent 01 · Structure
+                  </span>
+                  <span class="stage-indicator text-[11px] font-mono text-ink-muted tabular-nums">
+                    waiting
+                  </span>
+                </div>
+                <div class="text-sm font-semibold text-ink">Rubric Parser</div>
+                <p class="text-xs text-ink-secondary mt-0.5 leading-relaxed">
+                  Deconstructs educator guidelines into weighted criteria &amp; scoring bands.
+                </p>
+              </div>
+
+              <!-- Stage 2: CoT Evaluator -->
+              <div
+                id="stage-cot_evaluator"
+                class="stage-card border border-black/[0.08] rounded-2xl p-4 bg-canvas/60 transition-all duration-300"
+              >
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-muted">
+                    Agent 02 · Reasoning
+                  </span>
+                  <span class="stage-indicator text-[11px] font-mono text-ink-muted tabular-nums">
+                    waiting
+                  </span>
+                </div>
+                <div class="text-sm font-semibold text-ink">CoT Evaluator</div>
+                <p class="text-xs text-ink-secondary mt-0.5 leading-relaxed">
+                  Performs line-by-line semantic trace &amp; extracts verbatim student evidence.
+                </p>
+              </div>
+
+              <!-- Stage 3: Reflection & Bias Auditor -->
+              <div
+                id="stage-reflection_auditor"
+                class="stage-card border border-black/[0.08] rounded-2xl p-4 bg-canvas/60 transition-all duration-300"
+              >
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-muted">
+                    Agent 03 · Calibration
+                  </span>
+                  <span class="stage-indicator text-[11px] font-mono text-ink-muted tabular-nums">
+                    waiting
+                  </span>
+                </div>
+                <div class="text-sm font-semibold text-ink">Reflection &amp; Bias Auditor</div>
+                <p class="text-xs text-ink-secondary mt-0.5 leading-relaxed">
+                  Audits initial scores for halo effect, verbosity bias, or double-jeopardy.
+                </p>
+              </div>
+
+              <!-- Stage 4: Feedback Synthesizer -->
+              <div
+                id="stage-feedback_synthesizer"
+                class="stage-card border border-black/[0.08] rounded-2xl p-4 bg-canvas/60 transition-all duration-300"
+              >
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-muted">
+                    Agent 04 · Pedagogy
+                  </span>
+                  <span class="stage-indicator text-[11px] font-mono text-ink-muted tabular-nums">
+                    waiting
+                  </span>
+                </div>
+                <div class="text-sm font-semibold text-ink">Feedback Synthesizer</div>
+                <p class="text-xs text-ink-secondary mt-0.5 leading-relaxed">
+                  Authors personalized learning gaps, code hints &amp; revision roadmap.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- EDITORIAL ASSESSMENT REPORT WORKSPACE -->
+          <section
+            class="studio-card rounded-3xl overflow-hidden animate-reveal"
+            style="--stagger: 3"
+          >
+            <!-- Editorial Hero Score Header -->
+            <div class="p-6 sm:p-8 bg-gradient-to-b from-[#FAF8F5] to-white border-b border-black/[0.07] space-y-6">
+              <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div class="text-[11px] font-mono uppercase tracking-widest text-ink-muted">
+                    Calibrated Assessment Record
+                  </div>
+                  <h3
+                    id="report-student-header"
+                    class="font-editorial text-2xl sm:text-3xl text-ink mt-0.5"
+                  >
+                    No active evaluation selected
+                  </h3>
+                </div>
+                <span
+                  id="report-audit-badge"
+                  class="text-xs font-mono font-semibold px-3 py-1 rounded-full bg-canvas-subtle text-ink-secondary border border-black/[0.07]"
+                >
+                  Awaiting Run
+                </span>
+              </div>
+
+              <!-- 5 Editorial Telemetry Metrics -->
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div class="rounded-2xl bg-white p-4 border border-black/[0.07] shadow-2xs">
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-ink-muted">
+                    Initial CoT
+                  </div>
+                  <div
+                    id="hero-initial-score"
+                    class="font-editorial text-2xl sm:text-3xl text-ink mt-1 tabular-nums"
+                  >
+                    --
+                  </div>
+                </div>
+
+                <div class="rounded-2xl bg-white p-4 border border-black/[0.07] shadow-2xs">
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-ink-muted">
+                    Bias Delta
+                  </div>
+                  <div
+                    id="hero-calibration-delta"
+                    class="font-editorial text-2xl sm:text-3xl text-indigo-700 mt-1 tabular-nums"
+                  >
+                    --
+                  </div>
+                </div>
+
+                <div class="rounded-2xl bg-ink text-white p-4 shadow-sm">
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-stone-400">
+                    Final Score
+                  </div>
+                  <div
+                    id="hero-final-score"
+                    class="font-editorial text-2xl sm:text-3xl text-white mt-1 tabular-nums"
+                  >
+                    --
+                  </div>
+                </div>
+
+                <div class="rounded-2xl bg-white p-4 border border-black/[0.07] shadow-2xs">
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-ink-muted">
+                    Percentage
+                  </div>
+                  <div
+                    id="hero-percentage"
+                    class="font-editorial text-2xl sm:text-3xl text-emerald-700 mt-1 tabular-nums"
+                  >
+                    --
+                  </div>
+                </div>
+
+                <div class="col-span-2 sm:col-span-1 rounded-2xl bg-indigo-50/80 p-4 border border-indigo-200/70">
+                  <div class="text-[10px] font-mono uppercase tracking-wider text-indigo-900">
+                    Grade
+                  </div>
+                  <div
+                    id="hero-letter-grade"
+                    class="font-editorial text-2xl sm:text-3xl text-indigo-950 mt-1"
+                  >
+                    --
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Segmented Tab Navigation Bar -->
+            <div class="px-6 sm:px-8 pt-4 bg-[#FAF8F5]/60 border-b border-black/[0.07] flex flex-wrap gap-2">
+              <button
+                type="button"
+                data-tab="feedback"
+                class="report-tab-btn btn-tactile px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 border-indigo-600 text-indigo-900 bg-white shadow-2xs"
+              >
+                Pedagogical Feedback
+              </button>
+              <button
+                type="button"
+                data-tab="criteria"
+                class="report-tab-btn btn-tactile px-4 py-2.5 text-xs font-medium rounded-t-xl border-b-2 border-transparent text-ink-secondary hover:text-ink"
+              >
+                Per-Criterion CoT Trace
+              </button>
+              <button
+                type="button"
+                data-tab="reflection"
+                class="report-tab-btn btn-tactile px-4 py-2.5 text-xs font-medium rounded-t-xl border-b-2 border-transparent text-ink-secondary hover:text-ink"
+              >
+                Reflection &amp; Bias Audit
+              </button>
+              <button
+                type="button"
+                data-tab="export"
+                class="report-tab-btn btn-tactile px-4 py-2.5 text-xs font-medium rounded-t-xl border-b-2 border-transparent text-ink-secondary hover:text-ink"
+              >
+                Export Report
+              </button>
+            </div>
+
+            <!-- Tab Content Panels -->
+            <div class="p-6 sm:p-8 min-h-[420px] max-h-[720px] overflow-y-auto bg-white">
+              <!-- Tab 1: Pedagogical Feedback -->
+              <div id="tab-panel-feedback" class="space-y-6 text-sm">
+                <div class="py-12 px-4 text-center max-w-md mx-auto space-y-4">
+                  <div class="w-12 h-12 rounded-2xl bg-canvas mx-auto flex items-center justify-center border border-black/[0.07]">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                    </svg>
+                  </div>
+                  <h4 class="font-editorial text-2xl text-ink">
+                    Ready to evaluate a student submission
+                  </h4>
+                  <p class="text-xs text-ink-secondary leading-relaxed">
+                    Click <strong>Auto-Fill Sample Submission</strong> above or upload a student file on the left, then press <strong>Run 4-Agent Evaluation</strong> to stream live rubric verification and personalized feedback.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Tab 2: Per-Criterion Breakdown -->
+              <div id="tab-panel-criteria" class="hidden space-y-5 text-sm">
+                <p class="text-ink-muted text-center py-12 text-xs">
+                  Criterion-by-criterion Chain-of-Thought traces and student evidence quotes will appear here.
+                </p>
+              </div>
+
+              <!-- Tab 3: Reflection & Bias Audit -->
+              <div id="tab-panel-reflection" class="hidden space-y-5 text-sm">
+                <p class="text-ink-muted text-center py-12 text-xs">
+                  Reflection audit checks and score calibration deltas will appear here.
+                </p>
+              </div>
+
+              <!-- Tab 4: Export Actions -->
+              <div id="tab-panel-export" class="hidden space-y-6 text-sm">
+                <div class="rounded-2xl bg-canvas p-6 border border-black/[0.07] space-y-4">
+                  <div>
+                    <h4 class="font-editorial text-2xl text-ink">
+                      Download Official Evaluation Report
+                    </h4>
+                    <p class="text-xs text-ink-secondary mt-1 leading-relaxed">
+                      Export the complete assessment—including calibrated criterion scores, Chain-of-Thought verification traces, reflection audit log, and student revision roadmap.
+                    </p>
+                  </div>
+                  <div class="flex flex-wrap gap-3 pt-2">
+                    <a
+                      id="export-md-link"
+                      href="#"
+                      target="_blank"
+                      class="btn-tactile pointer-events-none opacity-50 inline-flex items-center gap-2 bg-ink hover:bg-indigo-950 text-white text-xs font-semibold px-5 py-3 rounded-xl shadow-xs"
+                    >
+                      <span>Download Markdown (.md)</span>
+                    </a>
+                    <a
+                      id="export-html-link"
+                      href="#"
+                      target="_blank"
+                      class="btn-tactile pointer-events-none opacity-50 inline-flex items-center gap-2 bg-white hover:bg-canvas-subtle text-ink border border-black/15 text-xs font-semibold px-5 py-3 rounded-xl shadow-2xs"
+                    >
+                      <span>Open Printable Report (.html / PDF)</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- SLIDE-OVER DRAWER: Past Evaluations Archive -->
+    <div
+      id="history-drawer-modal"
+      class="fixed inset-0 z-50 hidden"
+      aria-labelledby="history-drawer-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop -->
+      <div
+        id="history-drawer-backdrop"
+        class="fixed inset-0 bg-black/30 backdrop-blur-xs drawer-backdrop"
+      ></div>
+
+      <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+        <div
+          class="w-screen max-w-md bg-[#FAF8F5] shadow-2xl border-l border-black/10 flex flex-col justify-between"
+        >
+          <div class="p-6 border-b border-black/[0.07] bg-white flex items-center justify-between">
+            <div>
+              <h2 id="history-drawer-title" class="font-editorial text-2xl text-ink">
+                Evaluation Archive
+              </h2>
+              <p class="text-xs text-ink-secondary">
+                Click any past run to inspect its full 4-agent report
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                id="refresh-history-btn"
+                type="button"
+                class="btn-tactile text-xs font-medium px-3 py-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle text-ink-secondary"
+              >
+                Refresh
+              </button>
+              <button
+                id="close-history-drawer-btn"
+                type="button"
+                class="btn-tactile w-8 h-8 rounded-lg bg-canvas hover:bg-canvas-subtle text-ink flex items-center justify-center text-lg"
+              >
+                &times;
+              </button>
+            </div>
           </div>
-          <textarea
-            id="new-assign-rubric"
-            rows="3"
-            placeholder="Optional grading criteria and point breakdown..."
-            class="w-full border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          ></textarea>
+
+          <div
+            id="evaluations-history-list"
+            class="flex-1 overflow-y-auto divide-y divide-black/[0.06] p-4 space-y-2.5"
+          >
+            <div class="text-xs text-ink-muted py-8 text-center">
+              No evaluations recorded yet.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Create Custom Assignment -->
+    <div
+      id="new-assignment-modal"
+      class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+    >
+      <div
+        class="studio-card rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl animate-reveal"
+      >
+        <div class="flex items-center justify-between border-b border-black/[0.07] pb-4">
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-widest text-indigo-700 font-semibold">
+              Benchmark Authoring
+            </span>
+            <h2 class="font-editorial text-3xl text-ink mt-0.5">
+              Create Custom Assignment
+            </h2>
+          </div>
+          <button
+            id="close-new-assignment-btn"
+            type="button"
+            class="w-9 h-9 rounded-xl bg-canvas hover:bg-canvas-subtle text-ink flex items-center justify-center text-lg"
+          >
+            &times;
+          </button>
         </div>
 
-        <div>
-          <label for="new-assign-reference" class="block font-medium text-slate-700 mb-1">
-            Reference Solution / Answer Key <span class="text-slate-400 font-normal">(Optional)</span>
+        <form id="new-assignment-form" class="space-y-5 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label for="new-assign-title" class="block font-semibold text-ink-secondary mb-1.5">
+                Assignment Title
+              </label>
+              <input
+                id="new-assign-title"
+                type="text"
+                required
+                placeholder="e.g., CS301: Concurrent Raft Consensus Log"
+                class="w-full bg-canvas border border-black/15 rounded-xl px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label for="new-assign-type" class="block font-semibold text-ink-secondary mb-1.5">
+                Modality
+              </label>
+              <select
+                id="new-assign-type"
+                class="w-full bg-canvas border border-black/15 rounded-xl px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="code">Code</option>
+                <option value="theory">Theory / Written</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="new-assign-prompt" class="font-semibold text-ink-secondary">
+                Assignment Prompt &amp; Problem Statement
+              </label>
+              <label class="text-indigo-600 hover:text-indigo-800 cursor-pointer font-semibold">
+                <span>Import from File (.md/.txt/.pdf)</span>
+                <input
+                  id="new-assign-prompt-file"
+                  type="file"
+                  accept=".md,.txt,.pdf,.ipynb"
+                  class="hidden"
+                />
+              </label>
+            </div>
+            <textarea
+              id="new-assign-prompt"
+              rows="4"
+              required
+              placeholder="Describe what students are required to build, prove, or analyze..."
+              class="w-full bg-canvas border border-black/15 rounded-xl p-3.5 text-ink leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            ></textarea>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="new-assign-rubric" class="font-semibold text-ink-secondary">
+                Raw Grading Rubric Guidelines
+              </label>
+              <label class="text-indigo-600 hover:text-indigo-800 cursor-pointer font-semibold">
+                <span>Import from File (.md/.txt/.pdf)</span>
+                <input
+                  id="new-assign-rubric-file"
+                  type="file"
+                  accept=".md,.txt,.pdf,.json"
+                  class="hidden"
+                />
+              </label>
+            </div>
+            <textarea
+              id="new-assign-rubric"
+              rows="4"
+              required
+              placeholder="List criteria, point weights, and expectations (the Rubric Parser agent will structure this automatically)..."
+              class="w-full bg-canvas border border-black/15 rounded-xl p-3.5 text-ink leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="new-assign-reference" class="block font-semibold text-ink-secondary mb-1.5">
+              Reference Solution / Exemplar Notes (Optional)
+            </label>
+            <textarea
+              id="new-assign-reference"
+              rows="3"
+              placeholder="Optional canonical solution or grading edge-cases..."
+              class="w-full font-mono bg-canvas border border-black/15 rounded-xl p-3.5 text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            ></textarea>
+          </div>
+
+          <label class="flex items-center gap-2.5 text-ink-secondary cursor-pointer">
+            <input
+              id="new-assign-parse-now"
+              type="checkbox"
+              class="rounded border-black/20 text-indigo-600 w-4 h-4"
+            />
+            <span>Immediately run Rubric Parser agent via Gemini API upon creation</span>
           </label>
-          <textarea
-            id="new-assign-reference"
-            rows="3"
-            placeholder="Optional reference implementation or key theoretical derivations..."
-            class="w-full font-mono border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          ></textarea>
-        </div>
 
-        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
-          <label class="inline-flex items-center gap-2 text-slate-700 cursor-pointer">
-            <input id="new-assign-parse-now" type="checkbox" class="rounded border-slate-300 text-indigo-600" />
-            <span>Parse &amp; generate structured rubric immediately via Gemini</span>
-          </label>
-
-          <div class="flex items-center gap-2">
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-black/[0.07]">
             <button
               id="cancel-new-assignment-btn"
               type="button"
-              class="btn-press px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
+              class="btn-tactile px-4 py-2.5 rounded-xl border border-black/15 text-ink-secondary hover:bg-canvas-subtle font-semibold"
             >
               Cancel
             </button>
             <button
               id="submit-new-assignment-btn"
               type="submit"
-              class="btn-press px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+              class="btn-tactile px-5 py-2.5 rounded-xl bg-ink hover:bg-indigo-950 text-white font-semibold shadow-sm"
             >
-              Save Assignment
+              Create Assignment
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-  </div>
 
-  <script src="/static/app.js"></script>
-</body>
+    <script src="/static/app.js"></script>
+  </body>
 </html>
