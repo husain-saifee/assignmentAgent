@@ -126,3 +126,4 @@ class EvaluateRequest(BaseModel):
     submission_filename: str = "submission.txt"
     submission_text: str
     force_reparse_rubric: bool = False
+    pdf_base64: str | None = None

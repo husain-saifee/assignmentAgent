@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autonomous Academic Evaluation &amp; Feedback Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .btn-press {
+      transition: transform 150ms var(--ease-out), background-color 150ms ease, border-color 150ms ease;
+    }
+    .btn-press:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900">
+  <!-- Top Navigation Bar -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-inner">
+          A4
+        </div>
+        <div>
+          <h1 class="font-semibold text-base tracking-tight leading-tight">
+            Autonomous Academic Evaluation &amp; Feedback Agent
+          </h1>
+          <p class="text-xs text-slate-400">
+            4-Stage Multi-Agent Pipeline &bull; Rubric Parser &rarr; CoT Evaluator &rarr; Reflection Auditor &rarr; Feedback Synthesizer
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Environment API Key Status Badge -->
+        <span id="env-key-badge" class="hidden items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          API Key Configured in .env
+        </span>
+
+        <!-- Browser API Key Override Input -->
+        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+          <label for="api-key-input" class="text-xs text-slate-400 mr-2 whitespace-nowrap">Gemini Key:</label>
+          <input
+            id="api-key-input"
+            type="password"
+            placeholder="Optional if set in .env..."
+            class="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-40"
+          />
+        </div>
+
+        <!-- Gemini Model Selector -->
+        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+          <label for="model-select" class="text-xs text-slate-400 mr-2 whitespace-nowrap">Model:</label>
+          <select
+            id="model-select"
+            class="bg-slate-800 text-xs text-white font-medium focus:outline-none cursor-pointer"
+          >
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+            <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+            <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+          </select>
+        </div>
+
+        <!-- Seed / Reset Sample Assignments Button -->
+        <button
+          id="seed-btn"
+          type="button"
+          class="btn-press text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg"
+        >
+          Seed / Reset Sample Assignments
+        </button>
+
+        <!-- Load Sample Student Submission Button -->
+        <button
+          id="load-sample-btn"
+          type="button"
+          class="btn-press text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm"
+        >
+          Load Sample Student Submission
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Banner / Toast -->
+  <div id="status-banner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between">
+      <span id="status-banner-text"></span>
+      <button id="status-banner-close" type="button" class="text-amber-700 hover:text-amber-950 font-semibold ml-4">&times;</button>
+    </div>
+  </div>
+
+  <!-- Main 3-Column Academic Workspace -->
+  <main class="max-w-[1600px] w-full mx-auto px-4 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <!-- Left Column: Saved Assignments & Past Evaluations (3 cols) -->
+    <aside class="lg:col-span-3 flex flex-col gap-4">
+      <!-- Saved Assignments Card -->
+      <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-800">Saved Assignments</h2>
+            <p class="text-[11px] text-slate-500">Select an assignment to evaluate</p>
+          </div>
+          <button
+            id="open-new-assignment-btn"
+            type="button"
+            class="btn-press text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg"
+          >
+            + New Assignment
+          </button>
+        </div>
+        <div id="assignments-list" class="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+          <div class="p-4 text-xs text-slate-400 text-center">Loading assignments...</div>
+        </div>
+      </section>
+
+      <!-- Past Evaluations History Card -->
+      <section class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-800">Past Evaluations</h2>
+            <p class="text-[11px] text-slate-500">Click any run to inspect its full report</p>
+          </div>
+          <button
+            id="refresh-history-btn"
+            type="button"
+            class="btn-press text-xs text-slate-600 hover:text-slate-900 px-2 py-1 rounded border border-slate-200 bg-white"
+          >
+            Refresh
+          </button>
+        </div>
+        <div id="evaluations-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+          <div class="p-4 text-xs text-slate-400 text-center">No evaluations recorded yet.</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Middle Column: Assignment & Rubric Viewer + Student Submission Input (4 cols) -->
+    <section class="lg:col-span-4 flex flex-col gap-4">
+      <!-- Assignment & Structured Rubric Viewer -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span id="active-assignment-badge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                HYBRID
+              </span>
+              <h2 id="active-assignment-title" class="text-sm font-semibold text-slate-800 truncate">
+                Select or Seed an Assignment
+              </h2>
+            </div>
+          </div>
+          <button
+            id="reparse-rubric-btn"
+            type="button"
+            class="btn-press text-xs font-medium text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md border border-indigo-200 whitespace-nowrap"
+          >
+            Parse / Refresh Rubric
+          </button>
+        </div>
+
+        <div class="p-4 space-y-3 max-h-[420px] overflow-y-auto text-xs">
+          <div>
+            <h3 class="font-semibold text-slate-700 uppercase tracking-wider text-[11px] mb-1">Assignment Prompt</h3>
+            <div
+              id="active-assignment-prompt"
+              class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-700 whitespace-pre-wrap font-sans leading-relaxed"
+            >No assignment selected.</div>
+          </div>
+
+          <details class="group border border-slate-200 rounded-lg bg-slate-50/50">
+            <summary class="px-3 py-2 font-semibold text-slate-700 cursor-pointer select-none flex items-center justify-between">
+              <span>Structured Rubric Criteria &amp; Scoring Bands</span>
+              <span id="rubric-points-badge" class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">0 pts</span>
+            </summary>
+            <div id="active-rubric-container" class="p-3 border-t border-slate-200 space-y-2.5 bg-white">
+              <p class="text-slate-400">Rubric will be parsed automatically on first evaluation or when you click "Parse / Refresh Rubric".</p>
+            </div>
+          </details>
+
+          <details class="group border border-slate-200 rounded-lg bg-slate-50/50">
+            <summary class="px-3 py-2 font-semibold text-slate-700 cursor-pointer select-none">
+              Reference Solution / Exemplar Notes
+            </summary>
+            <pre
+              id="active-assignment-reference"
+              class="p-3 border-t border-slate-200 bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap"
+            >None provided.</pre>
+          </details>
+        </div>
+      </div>
+
+      <!-- Student Submission Input Card -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-800">Student Submission</h2>
+            <p class="text-[11px] text-slate-500">Upload code, notebook, Markdown, or PDF, or paste directly</p>
+          </div>
+          <span id="ingested-file-badge" class="hidden text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded"></span>
+        </div>
+
+        <form id="evaluate-form" class="p-4 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="student-name-input" class="block text-xs font-medium text-slate-700 mb-1">Student Name</label>
+              <input
+                id="student-name-input"
+                type="text"
+                required
+                value="Anonymous Student"
+                class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label for="student-id-input" class="block text-xs font-medium text-slate-700 mb-1">Student ID</label>
+              <input
+                id="student-id-input"
+                type="text"
+                placeholder="e.g. STU-4082"
+                class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <!-- File Dropzone / Picker -->
+          <div
+            id="submission-dropzone"
+            class="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-lg p-3 text-center bg-slate-50/70 transition-colors cursor-pointer"
+          >
+            <input
+              id="submission-file-input"
+              type="file"
+              accept=".pdf,.py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs,.go,.rs,.sql,.sh,.ipynb,.md,.txt,.json,.yaml,.yml,.csv,.html,.css"
+              class="hidden"
+            />
+            <p class="text-xs font-medium text-slate-700">
+              Drop student file here or <span class="text-indigo-600 underline">browse file</span>
+            </p>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Supports .py, .js, .ts, .java, .cpp, .ipynb, .pdf, .md, .txt (up to 15 MB)
+            </p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="submission-text-input" class="block text-xs font-medium text-slate-700">
+                Submission Code / Written Response
+              </label>
+              <input
+                id="submission-filename-input"
+                type="text"
+                value="submission.txt"
+                class="text-[11px] font-mono text-slate-600 border border-slate-200 rounded px-2 py-0.5 w-44 text-right"
+                title="Submission filename"
+              />
+            </div>
+            <textarea
+              id="submission-text-input"
+              rows="11"
+              required
+              placeholder="Paste student code or theoretical response here, or click 'Load Sample Student Submission' in the top bar..."
+              class="w-full text-xs font-mono bg-slate-900 text-slate-100 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
+            ></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+              <input id="force-reparse-checkbox" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+              <span>Force re-parse rubric in Stage 1</span>
+            </label>
+
+            <button
+              id="run-eval-btn"
+              type="submit"
+              class="btn-press bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-400 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2"
+            >
+              <span>Run 4-Agent Evaluation</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Right Column: Live 4-Stage Pipeline Stepper, Score Hero Card, and 4 Report Tabs (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
+      <!-- Live 4-Stage Agent Pipeline Stepper -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-800">Live 4-Stage Agent Pipeline</h2>
+            <p class="text-[11px] text-slate-500">Real-time Server-Sent Events (SSE) execution telemetry</p>
+          </div>
+          <span id="pipeline-overall-status" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+            Idle
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2" id="pipeline-stepper">
+          <!-- Stage 1 -->
+          <div id="stage-card-rubric_parser" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">1. Rubric Parser</span>
+              <span id="stage-badge-rubric_parser" class="text-[10px] font-mono text-slate-400">pending</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Normalizes criteria &amp; scoring bands</p>
+          </div>
+
+          <!-- Stage 2 -->
+          <div id="stage-card-cot_evaluator" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">2. CoT Evaluator</span>
+              <span id="stage-badge-cot_evaluator" class="text-[10px] font-mono text-slate-400">pending</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Static/semantic trace &amp; evidence quotes</p>
+          </div>
+
+          <!-- Stage 3 -->
+          <div id="stage-card-reflection_auditor" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">3. Reflection Auditor</span>
+              <span id="stage-badge-reflection_auditor" class="text-[10px] font-mono text-slate-400">pending</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Audits bias, double penalties &amp; bounds</p>
+          </div>
+
+          <!-- Stage 4 -->
+          <div id="stage-card-feedback_synthesizer" class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">4. Feedback Synth</span>
+              <span id="stage-badge-feedback_synthesizer" class="text-[10px] font-mono text-slate-400">pending</span>
+            </div>
+            <p class="text-[11px] text-slate-600 mt-1 leading-snug">Synthesizes gaps &amp; revision roadmap</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score & Calibration Hero Card -->
+      <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl shadow-sm p-4 border border-indigo-900/60">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-indigo-800/50">
+          <div>
+            <span class="text-[10px] uppercase tracking-widest text-indigo-300 font-semibold">Calibrated Evaluation Summary</span>
+            <h3 id="report-student-header" class="text-sm font-semibold text-white">No Evaluation Selected</h3>
+          </div>
+          <span id="report-audit-badge" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-200 border border-indigo-700">
+            Awaiting Run
+          </span>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2 text-center">
+          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
+            <div class="text-[10px] uppercase tracking-wider text-slate-300">Initial Score</div>
+            <div id="hero-initial-score" class="text-base font-bold font-mono text-slate-100 mt-0.5">&mdash;</div>
+          </div>
+          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
+            <div class="text-[10px] uppercase tracking-wider text-slate-300">Calibration &Delta;</div>
+            <div id="hero-calibration-delta" class="text-base font-bold font-mono text-amber-300 mt-0.5">&mdash;</div>
+          </div>
+          <div class="bg-indigo-500/20 rounded-lg p-2.5 border border-indigo-400/40">
+            <div class="text-[10px] uppercase tracking-wider text-indigo-200">Final Score</div>
+            <div id="hero-final-score" class="text-base font-bold font-mono text-white mt-0.5">&mdash;</div>
+          </div>
+          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
+            <div class="text-[10px] uppercase tracking-wider text-slate-300">Percentage</div>
+            <div id="hero-percentage" class="text-base font-bold font-mono text-emerald-300 mt-0.5">&mdash;</div>
+          </div>
+          <div class="bg-white/5 rounded-lg p-2.5 border border-white/10">
+            <div class="text-[10px] uppercase tracking-wider text-slate-300">Letter Grade</div>
+            <div id="hero-letter-grade" class="text-lg font-extrabold font-mono text-white mt-0.5">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Report Tabs Card -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden flex-1 flex flex-col">
+        <div class="border-b border-slate-200 bg-slate-50 px-2 pt-2 flex flex-wrap gap-1" role="tablist">
+          <button
+            type="button"
+            data-tab="feedback"
+            class="report-tab-btn px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 border-indigo-600 text-indigo-700 bg-white"
+          >
+            1. Personalized Feedback &amp; Gaps
+          </button>
+          <button
+            type="button"
+            data-tab="criteria"
+            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
+          >
+            2. Criterion Breakdown &amp; CoT Trace
+          </button>
+          <button
+            type="button"
+            data-tab="reflection"
+            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
+          >
+            3. Reflection &amp; Bias Audit Log
+          </button>
+          <button
+            type="button"
+            data-tab="export"
+            class="report-tab-btn px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900"
+          >
+            4. Export Report
+          </button>
+        </div>
+
+        <div class="p-4 flex-1 max-h-[560px] overflow-y-auto text-xs">
+          <!-- Tab 1: Personalized Feedback & Learning Gaps -->
+          <div id="tab-panel-feedback" class="report-tab-panel space-y-4">
+            <p class="text-slate-400 text-center py-8">
+              Run an evaluation or select a past evaluation from the left panel to view personalized pedagogical feedback.
+            </p>
+          </div>
+
+          <!-- Tab 2: Criterion Breakdown & CoT Reasoning Trace -->
+          <div id="tab-panel-criteria" class="report-tab-panel hidden space-y-4">
+            <p class="text-slate-400 text-center py-8">
+              Criterion-by-criterion evaluations, mental execution traces, and student evidence quotes will appear here.
+            </p>
+          </div>
+
+          <!-- Tab 3: Reflection & Bias Audit Log -->
+          <div id="tab-panel-reflection" class="report-tab-panel hidden space-y-4">
+            <p class="text-slate-400 text-center py-8">
+              Reflection audit verdicts, bias checks, and score calibration details will appear here.
+            </p>
+          </div>
+
+          <!-- Tab 4: Export Report -->
+          <div id="tab-panel-export" class="report-tab-panel hidden space-y-4">
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <h3 class="text-sm font-semibold text-slate-800">Export Complete Evaluation Report</h3>
+              <p class="text-xs text-slate-600">
+                Download a structured Markdown report for LMS / GitHub feedback or open a print-ready HTML/PDF report in a new tab.
+              </p>
+              <div class="flex flex-wrap gap-3 pt-1">
+                <a
+                  id="export-md-link"
+                  href="#"
+                  class="btn-press pointer-events-none opacity-50 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-2"
+                >
+                  Download .md Report
+                </a>
+                <a
+                  id="export-html-link"
+                  href="#"
+                  target="_blank"
+                  rel="noopener"
+                  class="btn-press pointer-events-none opacity-50 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-2"
+                >
+                  Open Printable HTML / PDF Report
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- "+ New Assignment" Modal -->
+  <div
+    id="new-assignment-modal"
+    class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full shadow-xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <h2 class="text-sm font-semibold text-slate-800">Create New Assignment</h2>
+        <button id="close-new-assignment-btn" type="button" class="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
+      </div>
+
+      <form id="new-assignment-form" class="p-5 space-y-3 text-xs max-h-[82vh] overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label for="new-assign-title" class="block font-medium text-slate-700 mb-1">Assignment Title</label>
+            <input
+              id="new-assign-title"
+              type="text"
+              required
+              placeholder="e.g. CS301: Binary Heap Implementation"
+              class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label for="new-assign-type" class="block font-medium text-slate-700 mb-1">Modality</label>
+            <select
+              id="new-assign-type"
+              class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              <option value="hybrid">hybrid</option>
+              <option value="code">code</option>
+              <option value="theory">theory</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="new-assign-prompt" class="font-medium text-slate-700">Assignment Prompt / Instructions</label>
+            <label class="text-indigo-600 hover:underline cursor-pointer">
+              <span>Upload .pdf / .md / .txt</span>
+              <input id="new-assign-prompt-file" type="file" accept=".pdf,.md,.txt" class="hidden" />
+            </label>
+          </div>
+          <textarea
+            id="new-assign-prompt"
+            rows="4"
+            required
+            placeholder="Describe the problem statement and requirements..."
+            class="w-full border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="new-assign-rubric" class="font-medium text-slate-700">
+              Raw Rubric Notes <span class="text-slate-400 font-normal">(Leave blank to auto-synthesize from prompt)</span>
+            </label>
+            <label class="text-indigo-600 hover:underline cursor-pointer">
+              <span>Upload .pdf / .md / .txt</span>
+              <input id="new-assign-rubric-file" type="file" accept=".pdf,.md,.txt" class="hidden" />
+            </label>
+          </div>
+          <textarea
+            id="new-assign-rubric"
+            rows="3"
+            placeholder="Optional grading criteria and point breakdown..."
+            class="w-full border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <label for="new-assign-reference" class="block font-medium text-slate-700 mb-1">
+            Reference Solution / Answer Key <span class="text-slate-400 font-normal">(Optional)</span>
+          </label>
+          <textarea
+            id="new-assign-reference"
+            rows="3"
+            placeholder="Optional reference implementation or key theoretical derivations..."
+            class="w-full font-mono border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+          <label class="inline-flex items-center gap-2 text-slate-700 cursor-pointer">
+            <input id="new-assign-parse-now" type="checkbox" class="rounded border-slate-300 text-indigo-600" />
+            <span>Parse &amp; generate structured rubric immediately via Gemini</span>
+          </label>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="cancel-new-assignment-btn"
+              type="button"
+              class="btn-press px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+            <button
+              id="submit-new-assignment-btn"
+              type="submit"
+              class="btn-press px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+            >
+              Save Assignment
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
