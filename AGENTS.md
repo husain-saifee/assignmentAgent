@@ -1,0 +1,12 @@
+## shadcn UI rules (apply in every project that needs UI)
+- Use the shadcn CLI only. No MCP.
+- Free tier only. Never use Pro/Premium/paid components, license keys, or paid registries.
+- If the project has no components.json and needs UI, run: shadcn init (or npx shadcn@latest init). Pick defaults for the project's framework. Don't re-init if it exists.
+- Allowed registries: default shadcn/ui, @react-bits (https://reactbits.dev/r/{name}.json), @magicui. Add one to the project's components.json only when it's needed, and verify its URL pattern in its docs first. Ask before adding any other registry.
+- Before hand-writing a UI component, check whether a free one already exists in an allowed registry. Install it with: shadcn add <name> or shadcn add @react-bits/<Name>. Then adapt it.
+- Only install components that are actually used. After each install, confirm files landed and the project builds.
+- If an install fails, read the full error and check aliases in components.json before retrying.
+- Installed components are our code. Edit freely, and never overwrite on re-add without asking.
+- Design flow (if the skills are available): pick a visual direction with frontend-design before coding, build with shadcn components, then run the impeccable critique/audit pass. If you can take browser screenshots, check desktop and mobile and fix visible issues.
+- Avoid default purple gradients, generic card grids, and Inter-everywhere.
+- Report at the end: components installed (and from which registry), anything skipped as paid, anything that failed.
