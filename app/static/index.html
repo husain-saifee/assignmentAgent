@@ -1,575 +1,554 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Assignment Evaluation Agent — Autonomous 4-Agent Grading Studio</title>
-    <!-- Modern Geometric & Technical Typography: Outfit (Display), DM Sans (UI/Body), JetBrains Mono (Code/Metrics) -->
+    <title>AETHER · Academic Evaluation Studio</title>
+
+    <!-- Inter: The premium UI font (Variable Weight) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: "class",
         theme: {
           extend: {
             fontFamily: {
-              display: ["'Outfit'", "sans-serif"],
-              sans: ["'DM Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-              mono: ["'JetBrains Mono'", "monospace"],
+              sans: ["'Inter'", "system-ui", "-apple-system", "sans-serif"],
+              mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+            },
+            colors: {
+              surface: {
+                0: "#09090b",
+                1: "#0f0f12",
+                2: "#16161a",
+                3: "#1c1c22",
+                4: "#25252d",
+              },
+              accent: {
+                DEFAULT: "#8b5cf6",
+                dim: "rgba(139, 92, 246, 0.15)",
+                border: "rgba(139, 92, 246, 0.3)",
+                glow: "rgba(139, 92, 246, 0.5)",
+              },
+              teal: {
+                DEFAULT: "#2dd4bf",
+                dim: "rgba(45, 212, 191, 0.12)",
+                border: "rgba(45, 212, 191, 0.25)",
+              },
+              success: {
+                DEFAULT: "#34d399",
+                dim: "rgba(52, 211, 153, 0.12)",
+                border: "rgba(52, 211, 153, 0.25)",
+              },
+              warn: {
+                DEFAULT: "#fbbf24",
+                dim: "rgba(251, 191, 36, 0.12)",
+                border: "rgba(251, 191, 36, 0.25)",
+              },
+              danger: {
+                DEFAULT: "#f87171",
+                dim: "rgba(248, 113, 113, 0.12)",
+                border: "rgba(248, 113, 113, 0.25)",
+              },
+              edge: "rgba(255,255,255,0.07)",
+              "edge-bright": "rgba(255,255,255,0.12)",
             },
           },
         },
       };
     </script>
+
     <style>
+      /* ─── Base ─── */
+      * { box-sizing: border-box; }
+
+      body {
+        background: #09090b;
+        color: #e4e4e7;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      }
+
+      /* Ambient background glow */
+      body::before {
+        content: "";
+        position: fixed;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 900px;
+        height: 600px;
+        background: radial-gradient(ellipse, rgba(139, 92, 246, 0.08), transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ─── Easing System (Emil Kowalski) ─── */
       :root {
-        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
         --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
       }
 
-      body {
-        font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: #e8edf4;
-        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-        background-size: 24px 24px;
-        color: #0f172a;
-        font-size: 15px;
-        line-height: 1.6;
-        -webkit-font-smoothing: antialiased;
+      /* ─── Surface System ─── */
+      .glass {
+        background: rgba(22, 22, 26, 0.7);
+        backdrop-filter: blur(20px) saturate(1.4);
+        -webkit-backdrop-filter: blur(20px) saturate(1.4);
+        border: 1px solid rgba(255, 255, 255, 0.06);
       }
 
-      h1,
-      h2,
-      h3,
-      h4,
-      .font-display {
-        font-family: "Outfit", sans-serif;
-        letter-spacing: -0.02em;
-      }
-
-      .tabular-nums {
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* Hard structural panels with unmistakable divisions */
-      .panel-box {
-        background: #ffffff;
-        border: 2px solid #cbd5e1;
+      .card {
+        background: #16161a;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 16px;
-        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06),
-          0 2px 6px -1px rgba(15, 23, 42, 0.04);
+        transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
       }
 
-      .panel-header {
-        background: #f8fafc;
-        border-bottom: 2px solid #e2e8f0;
-        border-top-left-radius: 14px;
-        border-top-right-radius: 14px;
+      .card:hover {
+        border-color: rgba(255, 255, 255, 0.1);
       }
 
-      /* Interactive button physics */
-      .btn-action {
-        transition: transform 150ms var(--ease-out), box-shadow 150ms var(--ease-out),
-          background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
-      }
-      .btn-action:hover:not(:disabled) {
-        transform: translateY(-1px);
-      }
-      .btn-action:active:not(:disabled) {
-        transform: translateY(0) scale(0.98);
+      .card-inner {
+        background: #1c1c22;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
       }
 
-      /* Step switcher active state */
-      .step-nav-btn {
-        transition: all 200ms var(--ease-out);
-      }
-      .step-nav-btn.active {
-        background: #0f172a;
-        color: #ffffff;
-        border-color: #0f172a;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
-      }
-      .step-nav-btn.active .step-num {
-        background: #3b82f6;
-        color: #ffffff;
-      }
-      .step-nav-btn.active .step-sub {
-        color: #94a3b8;
+      /* ─── Interactive Elements ─── */
+      .btn {
+        transition: transform 140ms var(--ease-out),
+                    box-shadow 200ms var(--ease-out),
+                    background-color 160ms var(--ease-out),
+                    border-color 160ms var(--ease-out),
+                    opacity 160ms var(--ease-out);
+        cursor: pointer;
+        user-select: none;
       }
 
-      /* View transitions */
-      @keyframes viewEnter {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      .btn:hover:not(:disabled) { transform: translateY(-1px); }
+      .btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #6d28d9 100%);
+        color: white;
+        box-shadow: 0 0 24px -6px rgba(139, 92, 246, 0.45),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
       }
-      .view-animate {
-        animation: viewEnter 260ms var(--ease-out) forwards;
+      .btn-primary:hover:not(:disabled) {
+        box-shadow: 0 0 32px -4px rgba(139, 92, 246, 0.65),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
 
-      /* Agent Pipeline Running Glow */
-      @keyframes pulseBorder {
-        0%,
-        100% {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+      /* ─── Input System ─── */
+      .input {
+        background: #0f0f12;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        color: white;
+        font-size: 13px;
+        padding: 10px 14px;
+        transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+        outline: none;
+      }
+      .input:focus {
+        border-color: rgba(139, 92, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+      }
+      .input::placeholder { color: rgba(255, 255, 255, 0.2); }
+
+      /* ─── Pipeline Nodes ─── */
+      @keyframes pulseGlow {
+        0%, 100% {
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 20px -4px rgba(139, 92, 246, 0.3);
+          border-color: rgba(139, 92, 246, 0.5);
         }
         50% {
-          border-color: #60a5fa;
-          box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.06);
+          box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.08), 0 0 28px -2px rgba(139, 92, 246, 0.5);
+          border-color: rgba(45, 212, 191, 0.5);
         }
-      }
-      .stage-running {
-        animation: pulseBorder 1.8s infinite ease-in-out;
       }
 
-      /* SVG Checkmark draw */
-      @keyframes drawCheck {
-        from {
-          stroke-dashoffset: 24;
-        }
-        to {
-          stroke-dashoffset: 0;
-        }
+      .node-running {
+        animation: pulseGlow 2s infinite ease-in-out;
+        background: rgba(139, 92, 246, 0.06) !important;
       }
-      .check-animated {
+      .node-complete {
+        background: rgba(52, 211, 153, 0.06) !important;
+        border-color: rgba(52, 211, 153, 0.35) !important;
+      }
+      .node-error {
+        background: rgba(248, 113, 113, 0.06) !important;
+        border-color: rgba(248, 113, 113, 0.4) !important;
+      }
+
+      /* ─── SVG Checkmark ─── */
+      @keyframes drawCheck {
+        from { stroke-dashoffset: 24; }
+        to { stroke-dashoffset: 0; }
+      }
+      .svg-check-anim {
         stroke-dasharray: 24;
         stroke-dashoffset: 0;
         animation: drawCheck 350ms var(--ease-out) forwards;
       }
+
+      /* ─── Score Ring ─── */
+      .score-ring-circle {
+        transition: stroke-dashoffset 900ms var(--ease-out), stroke 400ms ease;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+      }
+
+      /* ─── Stagger Entrance Animation ─── */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-enter { animation: fadeUp 280ms var(--ease-out) forwards; }
+      .stagger-1 { animation-delay: 0ms; }
+      .stagger-2 { animation-delay: 50ms; }
+      .stagger-3 { animation-delay: 100ms; }
+      .stagger-4 { animation-delay: 150ms; }
+
+      /* ─── Custom Scrollbar ─── */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+      /* ─── Dividers ─── */
+      .divider { height: 1px; background: rgba(255,255,255,0.06); }
+
+      /* ─── Dot Indicator ─── */
+      .dot-pulse {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        animation: dotPulse 2s infinite ease-in-out;
+      }
+      @keyframes dotPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+      }
+
+      /* ─── Tab indicator ─── */
+      .tab-active {
+        background: rgba(139, 92, 246, 0.15);
+        color: #c4b5fd;
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+
+      /* ─── Tabular Numbers ─── */
+      .tabular-nums { font-variant-numeric: tabular-nums; }
+
+      /* ─── Selection ─── */
+      ::selection { background: rgba(139, 92, 246, 0.35); color: white; }
+
+      /* ─── Label ─── */
+      .label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.35);
+      }
     </style>
   </head>
 
-  <body class="min-h-screen flex flex-col">
-    <!-- TOP DARK ARCHITECTURAL COMMAND BAR -->
-    <header class="bg-[#0B0F19] text-white border-b-2 border-slate-800 sticky top-0 z-40 shadow-lg">
-      <div class="max-w-[1440px] mx-auto px-6 lg:px-10 h-20 flex items-center justify-between gap-6">
-        <!-- Brand Logo & Title -->
-        <div class="flex items-center gap-4">
-          <div
-            class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/30 border border-blue-400/30 shrink-0"
-          >
-            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+  <body class="min-h-screen flex flex-col relative">
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  HEADER / NAV BAR                                  -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <header class="sticky top-0 z-50 glass border-b border-edge">
+      <div class="max-w-[1440px] mx-auto px-6 h-[60px] flex items-center justify-between gap-4">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <i data-lucide="sparkles" class="w-[18px] h-[18px] text-white"></i>
           </div>
-          <div>
-            <div class="flex items-center gap-3">
-              <h1 class="font-display text-xl sm:text-2xl font-bold tracking-tight text-white">
-                Assignment Evaluation Agent
-              </h1>
-              <span
-                id="env-key-badge"
-                class="hidden items-center gap-1.5 text-xs font-mono font-semibold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-              >
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>API Key Connected</span>
-              </span>
-            </div>
-            <p class="text-xs sm:text-sm text-slate-400 hidden md:block">
-              Multi-Agent Rubric Parsing · Chain-of-Thought Verification · Bias Calibration
-            </p>
+          <div class="flex items-baseline gap-2.5">
+            <span class="font-bold text-[17px] tracking-[-0.02em] text-white">AETHER</span>
+            <span class="text-[10px] font-mono font-semibold tracking-wider text-violet-300/70 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-md">STUDIO</span>
           </div>
         </div>
 
-        <!-- Right Controls: Model Selector, API Key Override, History Button -->
-        <div class="flex items-center gap-3">
+        <!-- Right Controls -->
+        <div class="flex items-center gap-2">
+          <!-- Env Key Badge -->
+          <span
+            id="env-key-badge"
+            class="hidden items-center gap-2 text-[11px] font-mono font-medium px-3 py-1.5 rounded-lg bg-success-dim text-emerald-300 border border-success-border"
+          >
+            <span class="dot-pulse bg-emerald-400"></span>
+            <span class="hidden sm:inline">Gemini Active</span>
+          </span>
+
           <!-- Model Selector -->
-          <div class="hidden xl:flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5">
-            <label for="model-select" class="text-xs font-mono uppercase tracking-wider text-slate-400">
-              Model:
-            </label>
+          <div class="hidden lg:flex items-center gap-2 bg-surface-2 border border-edge rounded-lg px-3 py-1.5">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-zinc-400"></i>
             <select
               id="model-select"
-              class="bg-transparent text-sm font-mono font-semibold text-blue-300 focus:outline-none cursor-pointer"
+              aria-label="Select Gemini Model"
+              class="bg-transparent text-[12px] font-mono font-medium text-zinc-300 focus:outline-none cursor-pointer"
             >
-              <option value="gemini-2.5-flash" class="bg-slate-900 text-white">gemini-2.5-flash</option>
-              <option value="gemini-2.5-pro" class="bg-slate-900 text-white">gemini-2.5-pro</option>
-              <option value="gemini-3.8-flash" class="bg-slate-900 text-white">gemini-3.8-flash</option>
-              <option value="gemini-3.1-pro-preview" class="bg-slate-900 text-white">gemini-3.1-pro-preview</option>
+              <option value="gemini-2.5-flash" class="bg-surface-1 text-white">gemini-2.5-flash</option>
+              <option value="gemini-2.5-pro" class="bg-surface-1 text-white">gemini-2.5-pro</option>
+              <option value="gemini-3.8-flash" class="bg-surface-1 text-white">gemini-3.8-flash</option>
+              <option value="gemini-3.1-pro-preview" class="bg-surface-1 text-white">gemini-3.1-pro-preview</option>
             </select>
           </div>
 
-          <!-- Optional API Key Override Input -->
-          <div class="hidden lg:flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5">
-            <input
-              id="api-key-input"
-              type="password"
-              placeholder="Optional API Key Override..."
-              class="bg-transparent text-xs font-mono text-white placeholder:text-slate-500 w-44 focus:outline-none"
-            />
+          <!-- API Key Button -->
+          <div class="relative">
+            <button
+              id="toggle-key-popover-btn"
+              type="button"
+              class="btn flex items-center gap-1.5 text-[12px] font-medium px-3 py-2 rounded-lg bg-surface-2 hover:bg-surface-3 text-zinc-300 border border-edge"
+              title="Configure API key"
+            >
+              <i data-lucide="key-round" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span class="hidden sm:inline">API Key</span>
+            </button>
+            <div
+              id="key-popover-panel"
+              class="hidden absolute right-0 mt-2 w-80 card p-4 z-50 shadow-2xl shadow-black/50"
+            >
+              <div class="text-[13px] font-semibold text-white mb-1">Session API Key Override</div>
+              <p class="text-[11px] text-zinc-500 mb-3">
+                Leave blank to use the server's <code class="font-mono text-emerald-400">.env</code> key.
+              </p>
+              <input
+                id="api-key-input"
+                type="password"
+                placeholder="Paste Gemini API key..."
+                class="input w-full text-[12px] font-mono"
+              />
+            </div>
           </div>
 
-          <!-- Evaluation Archive Drawer Button -->
+          <!-- History Button -->
           <button
             id="open-history-drawer-btn"
             type="button"
-            class="btn-action flex items-center gap-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl border border-slate-600"
+            class="btn flex items-center gap-2 text-[12px] font-semibold px-3.5 py-2 rounded-lg bg-surface-2 hover:bg-surface-3 text-white border border-edge"
           >
-            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Past Runs</span>
+            <i data-lucide="history" class="w-4 h-4 text-teal-400"></i>
+            <span>History</span>
             <span
               id="history-count-badge"
-              class="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white tabular-nums"
-            >
-              0
-            </span>
+              class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border tabular-nums"
+            >0</span>
           </button>
         </div>
       </div>
     </header>
 
-    <!-- STATUS TOAST BANNER -->
-    <div id="status-banner" class="hidden max-w-[1440px] w-full mx-auto px-6 lg:px-10 pt-5">
+    <!-- STATUS BANNER -->
+    <div id="status-banner" class="hidden max-w-[1440px] w-full mx-auto px-6 pt-4 relative z-10">
       <div
         id="status-banner-inner"
-        class="rounded-xl px-5 py-3.5 text-sm font-medium flex items-center justify-between border-2 shadow-sm"
+        class="rounded-xl px-4 py-3 text-[13px] font-medium flex items-center justify-between border shadow-lg"
       >
         <span id="status-banner-text"></span>
         <button
           id="status-banner-close"
           type="button"
-          class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-black/5 hover:bg-black/10 ml-4"
-        >
-          Close
-        </button>
+          class="btn text-[11px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 ml-4"
+        >Dismiss</button>
       </div>
     </div>
 
-    <!-- MAIN APPLICATION CONTAINER -->
-    <main class="max-w-[1440px] w-full mx-auto px-6 lg:px-10 py-8 flex-1 space-y-8">
-      <!-- STEP NAVIGATION BAR (Clear 3-Stage Wayfinding + Quick Demo Trigger) -->
-      <div class="panel-box p-4 sm:p-5 bg-white">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <!-- 3 Step Switcher Buttons -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-            <button
-              type="button"
-              data-step-target="1"
-              class="step-nav-btn active text-left p-4 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-slate-400 flex items-center gap-3.5"
-            >
-              <span
-                class="step-num w-9 h-9 rounded-lg bg-slate-200 text-slate-800 font-display font-bold text-lg flex items-center justify-center shrink-0"
-              >
-                1
-              </span>
-              <div class="min-w-0">
-                <div class="font-display font-bold text-base truncate">
-                  Assignment &amp; Rubric
-                </div>
-                <div class="step-sub text-xs text-slate-500 truncate">
-                  Select benchmark or create prompt
-                </div>
-              </div>
-            </button>
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  MAIN CONTENT                                      -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <main class="max-w-[1440px] w-full mx-auto px-6 py-8 flex-1 flex flex-col gap-8 relative z-10">
 
-            <button
-              type="button"
-              data-step-target="2"
-              class="step-nav-btn text-left p-4 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-slate-400 flex items-center gap-3.5"
-            >
-              <span
-                class="step-num w-9 h-9 rounded-lg bg-slate-200 text-slate-800 font-display font-bold text-lg flex items-center justify-center shrink-0"
-              >
-                2
-              </span>
-              <div class="min-w-0">
-                <div class="font-display font-bold text-base truncate">
-                  Student Submission
-                </div>
-                <div class="step-sub text-xs text-slate-500 truncate">
-                  Upload .py, .ipynb, .pdf or paste work
-                </div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              data-step-target="3"
-              class="step-nav-btn text-left p-4 rounded-xl border-2 border-slate-200 bg-slate-50 hover:border-slate-400 flex items-center gap-3.5"
-            >
-              <span
-                class="step-num w-9 h-9 rounded-lg bg-slate-200 text-slate-800 font-display font-bold text-lg flex items-center justify-center shrink-0"
-              >
-                3
-              </span>
-              <div class="min-w-0">
-                <div class="font-display font-bold text-base truncate">
-                  Live 4-Agent Report
-                </div>
-                <div class="step-sub text-xs text-slate-500 truncate">
-                  Real-time telemetry &amp; calibrated grade
-                </div>
-              </div>
-            </button>
+      <!-- ─── SECTION 1: ASSIGNMENTS + PIPELINE ─── -->
+      <section class="card overflow-hidden">
+        <!-- Assignment Bar -->
+        <div class="px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-edge">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="folder-open" class="w-4 h-4 text-zinc-400"></i>
+              <span class="label">Assignment</span>
+            </div>
+            <div id="assignments-list" class="flex flex-wrap items-center gap-2">
+              <span class="text-[12px] text-zinc-500 font-mono">Loading...</span>
+            </div>
           </div>
 
-          <!-- Divider on Desktop -->
-          <div class="hidden lg:block w-0.5 h-14 bg-slate-200"></div>
-
-          <!-- Instant Demo Action -->
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
             <button
-              id="quick-demo-btn"
+              id="open-new-assignment-btn"
               type="button"
-              class="btn-action w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-display font-bold text-sm px-5 py-4 rounded-xl shadow-sm border-2 border-amber-600/30"
+              class="btn text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-4 text-zinc-200 border border-edge"
             >
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>Load Demo Student Work</span>
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                New
+              </span>
             </button>
+            <button
+              id="seed-btn"
+              type="button"
+              class="btn text-[12px] font-medium px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-surface-3 border border-transparent hover:border-edge"
+              title="Reset demo assignments"
+            >Reset Demos</button>
+            <div class="w-px h-5 bg-edge hidden sm:block"></div>
+            <span
+              id="pipeline-overall-status"
+              class="text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-surface-0 text-zinc-400 border border-edge tabular-nums"
+            >Idle · Ready</span>
           </div>
         </div>
-      </div>
 
-      <!-- =================================================================== -->
-      <!-- STEP 1 VIEW: ASSIGNMENT BENCHMARK & RUBRIC SPECIFICATION            -->
-      <!-- =================================================================== -->
-      <section id="view-step-1" class="view-animate space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <!-- Left Column (5 Cols): Assignments List & Actions -->
-          <div class="lg:col-span-5 panel-box overflow-hidden">
-            <div class="panel-header px-6 py-5 flex items-center justify-between gap-3">
-              <div>
-                <span class="text-xs font-mono font-bold uppercase tracking-wider text-blue-600">
-                  Benchmark Library
-                </span>
-                <h2 class="font-display text-xl font-bold text-slate-900">
-                  Course Assignments
-                </h2>
-              </div>
+        <!-- 4-Agent Pipeline Stages -->
+        <div class="p-5 bg-surface-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="pipeline-stepper">
+          <!-- Stage 1 -->
+          <div id="stage-rubric_parser" class="stage-card card-inner rounded-xl p-4 relative overflow-hidden">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
               <div class="flex items-center gap-2">
-                <button
-                  id="seed-btn"
-                  type="button"
-                  class="btn-action text-xs font-semibold px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300"
-                  title="Restore default sample assignments"
-                >
-                  Reset Demos
-                </button>
-                <button
-                  id="open-new-assignment-btn"
-                  type="button"
-                  class="btn-action text-xs font-bold px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                >
-                  + New Assignment
-                </button>
-              </div>
-            </div>
-
-            <div class="p-6 space-y-4">
-              <div id="assignments-list" class="space-y-3">
-                <div class="text-sm text-slate-500 py-8 text-center">
-                  Loading assignments...
+                <div class="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center">
+                  <span class="text-[10px] font-mono font-bold text-violet-400">01</span>
                 </div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-violet-400">Rubric Parser</span>
               </div>
+              <span class="stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums">standby</span>
             </div>
+            <div class="font-semibold text-[14px] text-white leading-snug">Structural Extraction</div>
+            <p class="text-[12px] text-zinc-500 mt-1 leading-relaxed">Deconstructs prompt & rubric into weighted scoring bands.</p>
           </div>
 
-          <!-- Right Column (7 Cols): Selected Assignment Specification & Rubric Bands -->
-          <div class="lg:col-span-7 panel-box overflow-hidden">
-            <div class="panel-header px-6 py-5 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div class="flex items-center gap-2.5">
-                  <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">
-                    Active Specification
-                  </span>
-                  <span
-                    id="assignment-type-badge"
-                    class="text-xs font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-300"
-                  >
-                    CODE
-                  </span>
+          <!-- Stage 2 -->
+          <div id="stage-cot_evaluator" class="stage-card card-inner rounded-xl p-4 relative overflow-hidden">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-teal-dim flex items-center justify-center">
+                  <span class="text-[10px] font-mono font-bold text-teal-400">02</span>
                 </div>
-                <h2
-                  id="assignment-detail-title"
-                  class="font-display text-2xl font-bold text-slate-900 mt-1"
-                >
-                  Select an Assignment
-                </h2>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-teal-400">CoT Evaluator</span>
               </div>
-
-              <div class="flex items-center gap-3">
-                <button
-                  id="reparse-rubric-btn"
-                  type="button"
-                  class="btn-action text-xs font-bold px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border-2 border-slate-300"
-                >
-                  Parse / Refresh Rubric
-                </button>
-                <button
-                  id="go-to-step-2-btn"
-                  type="button"
-                  class="btn-action inline-flex items-center gap-2 text-sm font-display font-bold px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                >
-                  <span>Next: Student Submission</span>
-                  <span>&rarr;</span>
-                </button>
-              </div>
+              <span class="stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums">standby</span>
             </div>
+            <div class="font-semibold text-[14px] text-white leading-snug">Semantic & Code Trace</div>
+            <p class="text-[12px] text-zinc-500 mt-1 leading-relaxed">Line-by-line verification with verbatim evidence extraction.</p>
+          </div>
 
-            <!-- Divided Specification Sections -->
-            <div class="divide-y-2 divide-slate-200">
-              <!-- Section 1: Assignment Prompt -->
-              <div class="p-6 space-y-2.5">
-                <h3 class="font-display text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  <span>Assignment Prompt &amp; Problem Statement</span>
-                </h3>
-                <div
-                  id="assignment-prompt-view"
-                  class="p-4 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto"
-                >
-                  No assignment selected.
+          <!-- Stage 3 -->
+          <div id="stage-reflection_auditor" class="stage-card card-inner rounded-xl p-4 relative overflow-hidden">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-warn-dim flex items-center justify-center">
+                  <span class="text-[10px] font-mono font-bold text-amber-400">03</span>
                 </div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400">Bias Auditor</span>
               </div>
-
-              <!-- Section 2: Parsed Rubric Criteria & Scoring Bands -->
-              <div class="p-6 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-display text-base font-bold text-slate-900 flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                    <span>Structured Grading Rubric Criteria</span>
-                  </h3>
-                  <span class="text-xs text-slate-500">Extracted by Agent 01 (Rubric Parser)</span>
-                </div>
-                <div
-                  id="structured-rubric-view"
-                  class="space-y-3 max-h-96 overflow-y-auto pr-1"
-                >
-                  No rubric parsed yet.
-                </div>
-              </div>
-
-              <!-- Section 3: Educator Reference Solution (Collapsible) -->
-              <div class="p-6 bg-slate-50/60">
-                <details class="group">
-                  <summary class="cursor-pointer list-none flex items-center justify-between font-display font-bold text-sm text-slate-700 hover:text-slate-950">
-                    <span class="flex items-center gap-2">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                      <span>View Educator Reference Solution &amp; Grading Notes</span>
-                    </span>
-                    <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-slate-200 text-slate-700 group-open:bg-slate-800 group-open:text-white">
-                      Toggle Reference
-                    </span>
-                  </summary>
-                  <pre
-                    id="assignment-reference-view"
-                    class="mt-4 p-4 rounded-xl bg-[#0B0F19] text-slate-100 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border-2 border-slate-800"
-                  >No reference solution provided.</pre>
-                </details>
-              </div>
+              <span class="stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums">standby</span>
             </div>
+            <div class="font-semibold text-[14px] text-white leading-snug">Calibration Audit</div>
+            <p class="text-[12px] text-zinc-500 mt-1 leading-relaxed">Checks for verbosity bias & double penalty scoring.</p>
+          </div>
+
+          <!-- Stage 4 -->
+          <div id="stage-feedback_synthesizer" class="stage-card card-inner rounded-xl p-4 relative overflow-hidden">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-success-dim flex items-center justify-center">
+                  <span class="text-[10px] font-mono font-bold text-emerald-400">04</span>
+                </div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Coach</span>
+              </div>
+              <span class="stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums">standby</span>
+            </div>
+            <div class="font-semibold text-[14px] text-white leading-snug">Pedagogical Synthesis</div>
+            <p class="text-[12px] text-zinc-500 mt-1 leading-relaxed">Learning gaps, code hints & revision roadmap.</p>
           </div>
         </div>
       </section>
 
-      <!-- =================================================================== -->
-      <!-- STEP 2 VIEW: STUDENT SUBMISSION STUDIO                              -->
-      <!-- =================================================================== -->
-      <section id="view-step-2" class="hidden view-animate">
-        <div class="max-w-4xl mx-auto panel-box overflow-hidden">
-          <!-- Studio Header -->
-          <div class="panel-header px-6 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-bold uppercase tracking-wider text-blue-600">
-                  Step 02 · Submission Workspace
-                </span>
-                <span class="text-slate-300">|</span>
-                <span
-                  id="step2-active-assignment-label"
-                  class="text-xs font-semibold text-slate-700"
-                >
-                  Active Assignment
-                </span>
-              </div>
-              <h2 class="font-display text-2xl font-bold text-slate-900 mt-1">
-                Provide Student Submission for Grading
-              </h2>
+      <!-- ─── SECTION 2: SPLIT WORKBENCH ─── -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+        <!-- ═══ LEFT PANE (5 cols): Input Area ═══ -->
+        <section class="lg:col-span-5 card overflow-hidden flex flex-col">
+          <!-- Left Pane Header with Tabs -->
+          <div class="px-5 py-3 flex items-center justify-between gap-3 border-b border-edge bg-surface-2/50">
+            <div class="flex items-center gap-1 bg-surface-0 p-1 rounded-lg border border-edge">
+              <button
+                type="button"
+                id="left-tab-editor-btn"
+                class="px-3 py-1.5 rounded-md text-[12px] font-semibold bg-accent-dim text-violet-300 border border-accent-border transition-all"
+              >Submission</button>
+              <button
+                type="button"
+                id="left-tab-spec-btn"
+                class="px-3 py-1.5 rounded-md text-[12px] font-medium text-zinc-500 hover:text-zinc-300 transition-all"
+              >Rubric & Spec</button>
             </div>
 
-            <button
-              id="load-sample-btn"
-              type="button"
-              class="btn-action inline-flex items-center gap-2 text-sm font-display font-bold px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 border-2 border-amber-300"
-            >
-              <svg class="w-4 h-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>Auto-Fill Sample Submission</span>
-            </button>
+            <span
+              id="assignment-type-badge"
+              class="text-[10px] font-mono font-bold uppercase px-2 py-1 rounded-md bg-accent-dim text-violet-300 border border-accent-border"
+            >CODE</span>
           </div>
 
-          <!-- Form Body -->
-          <form id="evaluate-form" class="divide-y-2 divide-slate-200">
-            <!-- Division 1: Student Identity & File Metadata -->
-            <div class="p-6 sm:p-8 bg-white grid grid-cols-1 sm:grid-cols-3 gap-5">
-              <div>
-                <label
-                  for="student-name-input"
-                  class="block text-sm font-bold text-slate-800 mb-2"
-                >
-                  Student Full Name
-                </label>
-                <input
-                  id="student-name-input"
-                  type="text"
-                  required
-                  value="Alex Rivera"
-                  class="w-full text-base bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
-                />
+          <!-- LEFT MODE 1: Student Submission -->
+          <div id="left-pane-editor" class="p-5 space-y-5">
+            <!-- Target Assignment Info -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-edge">
+              <div class="min-w-0">
+                <span class="label">Target Assignment</span>
+                <h2
+                  id="assignment-detail-title"
+                  class="text-[16px] font-semibold text-white truncate mt-0.5 tracking-[-0.01em]"
+                >Select an Assignment</h2>
               </div>
-
-              <div>
-                <label
-                  for="student-id-input"
-                  class="block text-sm font-bold text-slate-800 mb-2"
-                >
-                  Student ID
-                </label>
-                <input
-                  id="student-id-input"
-                  type="text"
-                  value="STU-2049"
-                  class="w-full text-base font-mono bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="submission-filename-input"
-                  class="block text-sm font-bold text-slate-800 mb-2"
-                >
-                  Artifact Filename
-                </label>
-                <input
-                  id="submission-filename-input"
-                  type="text"
-                  value="submission.py"
-                  class="w-full text-base font-mono bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium focus:outline-none focus:border-blue-600 focus:bg-white"
-                />
-              </div>
+              <button
+                id="load-sample-btn"
+                type="button"
+                class="btn inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg bg-warn-dim hover:bg-amber-500/20 text-amber-300 border border-warn-border shrink-0"
+              >
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                <span>Load Sample</span>
+              </button>
             </div>
 
-            <!-- Division 2: File Upload Dropzone + Code/Text Editor -->
-            <div class="p-6 sm:p-8 bg-slate-50/50 space-y-6">
-              <!-- Drag & Drop Zone -->
+            <form id="evaluate-form" class="space-y-4">
+              <!-- Student Fields Row -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label for="student-name-input" class="block text-[12px] font-medium text-zinc-400 mb-1.5">Student Name</label>
+                  <input id="student-name-input" type="text" required value="Alex Rivera" class="input w-full" />
+                </div>
+                <div>
+                  <label for="student-id-input" class="block text-[12px] font-medium text-zinc-400 mb-1.5">Student ID</label>
+                  <input id="student-id-input" type="text" value="STU-2049" class="input w-full font-mono" />
+                </div>
+                <div>
+                  <label for="submission-filename-input" class="block text-[12px] font-medium text-zinc-400 mb-1.5">Filename</label>
+                  <input id="submission-filename-input" type="text" value="lru_cache_student.py" class="input w-full font-mono text-violet-300" />
+                </div>
+              </div>
+
+              <!-- File Dropzone -->
               <div
                 id="submission-dropzone"
-                class="border-2 border-dashed border-slate-400 hover:border-blue-600 rounded-2xl p-6 text-center cursor-pointer transition-all bg-white hover:bg-blue-50/40 shadow-sm"
+                class="border border-dashed border-edge hover:border-violet-500/40 rounded-xl p-3.5 bg-surface-0 hover:bg-accent-dim cursor-pointer transition-all flex items-center justify-between gap-3"
               >
                 <input
                   id="submission-file-input"
@@ -577,455 +556,315 @@
                   accept=".py,.js,.ts,.java,.cpp,.c,.cs,.go,.rs,.sql,.sh,.md,.txt,.json,.yaml,.yml,.csv,.html,.css,.ipynb,.pdf"
                   class="hidden"
                 />
-                <div class="w-12 h-12 rounded-2xl bg-blue-50 border-2 border-blue-200 mx-auto flex items-center justify-center mb-3">
-                  <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-lg bg-accent-dim border border-accent-border flex items-center justify-center shrink-0">
+                    <i data-lucide="upload" class="w-4 h-4 text-violet-400"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-[12px] font-medium text-zinc-300 truncate">
+                      Drop <span class="font-mono text-violet-300">.py .ipynb .pdf .md</span> or click
+                    </div>
+                    <div class="text-[11px] text-zinc-600 truncate">PDF & Jupyter extraction built-in</div>
+                  </div>
                 </div>
-                <div class="font-display text-lg font-bold text-slate-900">
-                  Click to upload a student file or drag &amp; drop here
-                </div>
-                <div class="text-sm text-slate-500 mt-1">
-                  Supports Code (<code class="font-mono text-slate-700">.py, .java, .cpp, .js, .sql</code>), Jupyter Notebooks (<code class="font-mono text-slate-700">.ipynb</code>), and PDFs (<code class="font-mono text-slate-700">.pdf</code>)
-                </div>
-                <div
+                <span
                   id="ingested-file-badge"
-                  class="hidden mt-3 inline-flex items-center gap-2 text-xs font-mono font-bold bg-blue-100 text-blue-900 border border-blue-300 px-3.5 py-1.5 rounded-lg"
-                ></div>
+                  class="hidden text-[10px] font-mono font-semibold bg-accent-dim text-violet-300 border border-accent-border px-2 py-1 rounded-md shrink-0"
+                ></span>
               </div>
 
-              <!-- Submission Source Editor -->
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <label
-                    for="submission-text-input"
-                    class="text-sm font-bold text-slate-800"
-                  >
-                    Submission Source Code / Written Response
-                  </label>
-                  <span class="text-xs font-mono text-slate-500">
-                    Editable before evaluation
-                  </span>
+              <!-- Code Editor Window -->
+              <div class="rounded-xl overflow-hidden border border-edge bg-surface-0">
+                <div class="px-4 py-2 bg-surface-2 border-b border-edge flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="flex gap-1.5">
+                      <span class="w-[10px] h-[10px] rounded-full bg-red-500/60"></span>
+                      <span class="w-[10px] h-[10px] rounded-full bg-amber-500/60"></span>
+                      <span class="w-[10px] h-[10px] rounded-full bg-emerald-500/60"></span>
+                    </div>
+                    <span class="text-[11px] font-mono text-zinc-500 ml-1">submission_buffer</span>
+                  </div>
+                  <span class="text-[10px] font-mono text-zinc-600">UTF-8</span>
                 </div>
                 <textarea
                   id="submission-text-input"
-                  rows="13"
+                  rows="14"
                   required
-                  placeholder="Paste student code or essay here, or click 'Auto-Fill Sample Submission' above..."
-                  class="w-full text-sm font-mono leading-relaxed bg-[#0B0F19] text-slate-100 placeholder:text-slate-500 border-2 border-slate-800 rounded-2xl p-5 focus:outline-none focus:border-blue-500 shadow-inner"
+                  placeholder="Paste student code or essay here..."
+                  class="w-full text-[12px] font-mono leading-relaxed bg-transparent text-zinc-200 placeholder:text-zinc-700 p-4 focus:outline-none resize-y"
                 ></textarea>
               </div>
-            </div>
 
-            <!-- Division 3: Action Footer -->
-            <div class="p-6 sm:p-8 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <label class="flex items-center gap-3 text-sm font-medium text-slate-700 cursor-pointer select-none">
-                <input
-                  id="force-reparse-checkbox"
-                  type="checkbox"
-                  class="rounded border-slate-400 text-blue-600 focus:ring-blue-500 w-5 h-5"
-                />
-                <span>Force fresh Rubric Parser run before evaluating</span>
-              </label>
+              <!-- Launch Controls -->
+              <div class="pt-1 space-y-3">
+                <label class="flex items-center gap-2.5 text-[12px] text-zinc-500 cursor-pointer select-none hover:text-zinc-300 transition-colors">
+                  <input
+                    id="force-reparse-checkbox"
+                    type="checkbox"
+                    class="rounded border-zinc-600 bg-surface-0 text-violet-500 focus:ring-violet-500 w-4 h-4"
+                  />
+                  <span>Force fresh rubric parse before grading</span>
+                </label>
 
-              <div class="flex items-center gap-3">
-                <button
-                  id="back-to-step-1-btn"
-                  type="button"
-                  class="btn-action px-5 py-3.5 rounded-xl border-2 border-slate-300 text-slate-700 font-display font-bold text-sm hover:bg-slate-100"
-                >
-                  &larr; Back
-                </button>
                 <button
                   id="run-eval-btn"
                   type="submit"
-                  class="btn-action bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-display font-bold text-base py-3.5 px-8 rounded-xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-3"
+                  class="btn btn-primary w-full font-semibold text-[15px] py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5"
                 >
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                  </svg>
+                  <i data-lucide="play" class="w-5 h-5"></i>
                   <span>Run 4-Agent Evaluation</span>
                 </button>
               </div>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- =================================================================== -->
-      <!-- STEP 3 VIEW: LIVE 4-AGENT PIPELINE & CALIBRATED GRADE REPORT        -->
-      <!-- =================================================================== -->
-      <section id="view-step-3" class="hidden view-animate space-y-8">
-        <!-- PANEL A: 4-AGENT LIVE TELEMETRY PIPELINE -->
-        <div class="panel-box overflow-hidden">
-          <div class="panel-header px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <span class="text-xs font-mono font-bold uppercase tracking-wider text-blue-600">
-                Real-Time Multi-Agent Execution
-              </span>
-              <h2 class="font-display text-2xl font-bold text-slate-900">
-                4-Stage Verification Pipeline
-              </h2>
-            </div>
-            <span
-              id="pipeline-overall-status"
-              class="text-sm font-mono font-bold px-4 py-2 rounded-xl bg-slate-200 text-slate-800 border border-slate-300 tabular-nums"
-            >
-              Idle · Ready
-            </span>
+            </form>
           </div>
 
-          <div class="p-6 sm:p-8 bg-white">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-5" id="pipeline-stepper">
-              <!-- Stage 1 -->
-              <div
-                id="stage-rubric_parser"
-                class="stage-card border-2 border-slate-200 rounded-2xl p-5 bg-slate-50 transition-all"
-              >
-                <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
-                  <span class="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-md bg-slate-200 text-slate-800">
-                    Stage 01
-                  </span>
-                  <span class="stage-indicator text-xs font-mono font-semibold text-slate-500 tabular-nums">
-                    waiting
-                  </span>
-                </div>
-                <div class="font-display text-lg font-bold text-slate-900">
-                  Rubric Parser
-                </div>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Converts raw grading rules into weighted criteria &amp; scoring bands.
-                </p>
-              </div>
+          <!-- LEFT MODE 2: Rubric & Spec Inspector -->
+          <div id="left-pane-spec" class="hidden p-5 space-y-5 max-h-[760px] overflow-y-auto">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-edge">
+              <h3 class="text-[15px] font-semibold text-white">Benchmark Specification</h3>
+              <button
+                id="reparse-rubric-btn"
+                type="button"
+                class="btn text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-accent-dim hover:bg-violet-500/20 text-violet-300 border border-accent-border"
+              >Parse / Refresh</button>
+            </div>
 
-              <!-- Stage 2 -->
+            <div class="space-y-2">
+              <span class="label">Assignment Prompt</span>
               <div
-                id="stage-cot_evaluator"
-                class="stage-card border-2 border-slate-200 rounded-2xl p-5 bg-slate-50 transition-all"
-              >
-                <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
-                  <span class="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-md bg-slate-200 text-slate-800">
-                    Stage 02
-                  </span>
-                  <span class="stage-indicator text-xs font-mono font-semibold text-slate-500 tabular-nums">
-                    waiting
-                  </span>
-                </div>
-                <div class="font-display text-lg font-bold text-slate-900">
-                  CoT Evaluator
-                </div>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Traces code/arguments line-by-line &amp; quotes verbatim student evidence.
-                </p>
-              </div>
+                id="assignment-prompt-view"
+                class="p-4 rounded-xl bg-surface-0 border border-edge text-[12px] text-zinc-400 whitespace-pre-wrap leading-relaxed"
+              >No assignment selected.</div>
+            </div>
 
-              <!-- Stage 3 -->
-              <div
-                id="stage-reflection_auditor"
-                class="stage-card border-2 border-slate-200 rounded-2xl p-5 bg-slate-50 transition-all"
-              >
-                <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
-                  <span class="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-md bg-slate-200 text-slate-800">
-                    Stage 03
-                  </span>
-                  <span class="stage-indicator text-xs font-mono font-semibold text-slate-500 tabular-nums">
-                    waiting
-                  </span>
-                </div>
-                <div class="font-display text-lg font-bold text-slate-900">
-                  Bias &amp; Reflection Auditor
-                </div>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Audits initial scores for verbosity bias, halo effect &amp; double penalties.
-                </p>
-              </div>
+            <div class="space-y-2">
+              <span class="label text-emerald-400/80">Structured Rubric Criteria</span>
+              <div id="structured-rubric-view" class="space-y-2.5">No rubric parsed yet.</div>
+            </div>
 
-              <!-- Stage 4 -->
-              <div
-                id="stage-feedback_synthesizer"
-                class="stage-card border-2 border-slate-200 rounded-2xl p-5 bg-slate-50 transition-all"
-              >
-                <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
-                  <span class="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-md bg-slate-200 text-slate-800">
-                    Stage 04
-                  </span>
-                  <span class="stage-indicator text-xs font-mono font-semibold text-slate-500 tabular-nums">
-                    waiting
-                  </span>
-                </div>
-                <div class="font-display text-lg font-bold text-slate-900">
-                  Feedback Synthesizer
-                </div>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Builds targeted learning gaps, code hints &amp; revision roadmap.
-                </p>
-              </div>
+            <div class="space-y-2">
+              <span class="label text-amber-400/80">Reference Solution</span>
+              <pre
+                id="assignment-reference-view"
+                class="p-4 rounded-xl bg-surface-0 border border-edge text-zinc-400 font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-x-auto"
+              >No reference solution provided.</pre>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- PANEL B: CALIBRATED SCORECARD & DETAILED REPORT TABS -->
-        <div class="panel-box overflow-hidden">
-          <!-- High-Contrast Dark Obsidian Hero Scorecard -->
-          <div class="bg-[#0B0F19] text-white p-6 sm:p-8 border-b-2 border-slate-800 space-y-6">
+        <!-- ═══ RIGHT PANE (7 cols): Results ═══ -->
+        <section class="lg:col-span-7 card overflow-hidden flex flex-col">
+          <!-- Scorecard Header -->
+          <div class="p-6 bg-gradient-to-b from-surface-2 to-surface-1 border-b border-edge space-y-5">
             <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs font-mono font-bold uppercase tracking-widest text-blue-400">
-                    Official Assessment Scorecard
-                  </span>
+                <div class="flex items-center gap-2.5 mb-1">
+                  <span class="label text-violet-400/80">Assessment Report</span>
                   <span
                     id="report-audit-badge"
-                    class="text-xs font-mono font-bold px-3 py-1 rounded-md bg-slate-800 text-emerald-300 border border-slate-700"
-                  >
-                    Awaiting Run
-                  </span>
+                    class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-success-dim text-emerald-300 border border-success-border"
+                  >Ready</span>
                 </div>
                 <h3
                   id="report-student-header"
-                  class="font-display text-2xl sm:text-3xl font-bold text-white mt-1"
-                >
-                  No active evaluation selected
-                </h3>
+                  class="text-[20px] font-bold text-white tracking-[-0.02em]"
+                >Awaiting Evaluation Run</h3>
               </div>
 
-              <!-- Direct Export Buttons in Header -->
-              <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2">
                 <a
                   id="export-md-link"
                   href="#"
                   target="_blank"
-                  class="btn-action pointer-events-none opacity-40 inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-mono font-bold px-4 py-2.5 rounded-xl border border-slate-600"
-                >
-                  <span>Export .MD</span>
-                </a>
+                  class="btn pointer-events-none opacity-40 inline-flex items-center gap-1.5 bg-surface-3 hover:bg-surface-4 text-zinc-200 text-[11px] font-mono font-semibold px-3 py-2 rounded-lg border border-edge"
+                >.MD Report</a>
                 <a
                   id="export-html-link"
                   href="#"
                   target="_blank"
-                  class="btn-action pointer-events-none opacity-40 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold px-4 py-2.5 rounded-xl shadow-sm"
-                >
-                  <span>Printable Report (.HTML / PDF)</span>
-                </a>
+                  class="btn pointer-events-none opacity-40 inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-mono font-semibold px-3 py-2 rounded-lg"
+                >HTML / PDF</a>
               </div>
             </div>
 
-            <!-- 5 Divided Metric Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-4">
-                <div class="text-xs font-mono uppercase tracking-wider text-slate-400">
-                  Initial CoT Score
+            <!-- Score Bento Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+              <!-- Score Ring -->
+              <div class="md:col-span-4 card-inner rounded-xl p-4 flex items-center gap-4">
+                <div class="relative w-[76px] h-[76px] shrink-0 flex items-center justify-center">
+                  <svg class="w-[76px] h-[76px]" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="5" />
+                    <circle
+                      id="score-ring-progress"
+                      class="score-ring-circle"
+                      cx="40" cy="40" r="34"
+                      fill="transparent"
+                      stroke="#8b5cf6"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-dasharray="213.6"
+                      stroke-dashoffset="213.6"
+                    />
+                  </svg>
+                  <div id="hero-letter-grade" class="absolute inset-0 flex items-center justify-center text-[22px] font-bold text-white">--</div>
                 </div>
-                <div
-                  id="hero-initial-score"
-                  class="font-display text-2xl sm:text-3xl font-bold text-slate-200 mt-1 tabular-nums"
-                >
-                  --
-                </div>
-              </div>
-
-              <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-4">
-                <div class="text-xs font-mono uppercase tracking-wider text-slate-400">
-                  Reflection Delta
-                </div>
-                <div
-                  id="hero-calibration-delta"
-                  class="font-display text-2xl sm:text-3xl font-bold text-amber-400 mt-1 tabular-nums"
-                >
-                  --
-                </div>
-              </div>
-
-              <div class="bg-blue-600 border-2 border-blue-400 rounded-2xl p-4 shadow-lg shadow-blue-600/20">
-                <div class="text-xs font-mono uppercase tracking-wider text-blue-100 font-semibold">
-                  Final Calibrated
-                </div>
-                <div
-                  id="hero-final-score"
-                  class="font-display text-2xl sm:text-3xl font-extrabold text-white mt-1 tabular-nums"
-                >
-                  --
+                <div>
+                  <span class="label">Mastery Score</span>
+                  <div id="hero-percentage" class="text-[24px] font-bold text-emerald-400 tabular-nums mt-0.5">--</div>
+                  <div class="text-[11px] text-zinc-600">Calibrated Grade</div>
                 </div>
               </div>
 
-              <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-4">
-                <div class="text-xs font-mono uppercase tracking-wider text-slate-400">
-                  Percentage
+              <!-- Metric Cards -->
+              <div class="md:col-span-8 grid grid-cols-3 gap-3">
+                <div class="card-inner rounded-xl p-4">
+                  <span class="label">Initial CoT</span>
+                  <div id="hero-initial-score" class="text-[20px] font-bold text-zinc-200 mt-1 tabular-nums">--</div>
+                  <div class="text-[10px] text-zinc-600 mt-0.5">Agent 02 Pass</div>
                 </div>
-                <div
-                  id="hero-percentage"
-                  class="font-display text-2xl sm:text-3xl font-bold text-emerald-400 mt-1 tabular-nums"
-                >
-                  --
-                </div>
-              </div>
 
-              <div class="col-span-2 sm:col-span-1 bg-emerald-500/15 border-2 border-emerald-500/40 rounded-2xl p-4">
-                <div class="text-xs font-mono uppercase tracking-wider text-emerald-300 font-semibold">
-                  Letter Grade
+                <div class="card-inner rounded-xl p-4">
+                  <span class="label">Bias Delta</span>
+                  <div id="hero-calibration-delta" class="text-[20px] font-bold text-amber-400 mt-1 tabular-nums">--</div>
+                  <div class="text-[10px] text-zinc-600 mt-0.5">Agent 03 Audit</div>
                 </div>
-                <div
-                  id="hero-letter-grade"
-                  class="font-display text-3xl sm:text-4xl font-extrabold text-emerald-300 mt-0.5"
-                >
-                  --
+
+                <div class="rounded-xl p-4 bg-violet-500/10 border border-violet-500/25">
+                  <span class="label text-violet-300/80">Final Score</span>
+                  <div id="hero-final-score" class="text-[20px] font-bold text-white mt-1 tabular-nums">--</div>
+                  <div class="text-[10px] text-violet-300/50 mt-0.5">Clamped Total</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Report Section Tab Bar -->
-          <div class="bg-slate-100 border-b-2 border-slate-200 px-6 sm:px-8 pt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              data-tab="feedback"
-              class="report-tab-btn px-5 py-3 text-sm font-display font-bold rounded-t-xl border-t-2 border-x-2 border-slate-300 bg-white text-blue-700 -mb-[2px]"
-            >
-              1. Pedagogical Feedback &amp; Coaching
+          <!-- Report Tabs -->
+          <div class="px-5 py-2.5 bg-surface-0 border-b border-edge flex flex-wrap gap-1.5">
+            <button type="button" data-tab="feedback"
+              class="report-tab-btn px-3.5 py-1.5 text-[12px] font-semibold rounded-lg tab-active border transition-all">
+              Pedagogical Feedback
             </button>
-            <button
-              type="button"
-              data-tab="criteria"
-              class="report-tab-btn px-5 py-3 text-sm font-display font-semibold rounded-t-xl border-t-2 border-x-2 border-transparent text-slate-600 hover:text-slate-900"
-            >
-              2. Per-Criterion CoT Breakdown
+            <button type="button" data-tab="criteria"
+              class="report-tab-btn px-3.5 py-1.5 text-[12px] font-medium rounded-lg text-zinc-500 hover:text-zinc-300 border border-transparent hover:bg-surface-3 transition-all">
+              Per-Criterion CoT
             </button>
-            <button
-              type="button"
-              data-tab="reflection"
-              class="report-tab-btn px-5 py-3 text-sm font-display font-semibold rounded-t-xl border-t-2 border-x-2 border-transparent text-slate-600 hover:text-slate-900"
-            >
-              3. Reflection &amp; Bias Audit Log
+            <button type="button" data-tab="reflection"
+              class="report-tab-btn px-3.5 py-1.5 text-[12px] font-medium rounded-lg text-zinc-500 hover:text-zinc-300 border border-transparent hover:bg-surface-3 transition-all">
+              Reflection & Bias
             </button>
-            <button
-              type="button"
-              data-tab="export"
-              class="report-tab-btn px-5 py-3 text-sm font-display font-semibold rounded-t-xl border-t-2 border-x-2 border-transparent text-slate-600 hover:text-slate-900"
-            >
-              4. Export Package
+            <button type="button" data-tab="export"
+              class="report-tab-btn px-3.5 py-1.5 text-[12px] font-medium rounded-lg text-zinc-500 hover:text-zinc-300 border border-transparent hover:bg-surface-3 transition-all">
+              Export
             </button>
           </div>
 
-          <!-- Report Tab Panels -->
-          <div class="p-6 sm:p-8 bg-white min-h-[420px]">
+          <!-- Report Content -->
+          <div class="p-6 flex-1 min-h-[480px] max-h-[680px] overflow-y-auto bg-surface-1">
             <!-- Tab 1: Feedback -->
             <div id="tab-panel-feedback" class="space-y-6">
-              <div class="text-center py-12 max-w-lg mx-auto space-y-4">
-                <p class="text-base text-slate-600">
-                  No evaluation is running yet. Go to <strong>Step 2 (Student Submission)</strong> or click <strong>Load Demo Student Work</strong> above to run a live 4-agent evaluation.
+              <div class="py-16 text-center max-w-sm mx-auto space-y-4">
+                <div class="w-14 h-14 rounded-2xl bg-accent-dim border border-accent-border mx-auto flex items-center justify-center">
+                  <i data-lucide="play" class="w-6 h-6 text-violet-400"></i>
+                </div>
+                <h4 class="text-[17px] font-semibold text-white">Ready to Evaluate</h4>
+                <p class="text-[13px] text-zinc-500 leading-relaxed">
+                  Click <strong class="text-zinc-300">Run 4-Agent Evaluation</strong> to stream live rubric parsing, grading, bias calibration, and coaching.
                 </p>
               </div>
             </div>
 
             <!-- Tab 2: Criteria -->
-            <div id="tab-panel-criteria" class="hidden space-y-6">
-              <p class="text-slate-500 text-center py-12">
-                Criterion evaluations will appear here once Agent 02 completes.
-              </p>
+            <div id="tab-panel-criteria" class="hidden space-y-4">
+              <p class="text-zinc-500 text-center py-12 text-[12px]">Per-criterion Chain-of-Thought traces will stream here as Agent 02 completes.</p>
             </div>
 
             <!-- Tab 3: Reflection -->
-            <div id="tab-panel-reflection" class="hidden space-y-6">
-              <p class="text-slate-500 text-center py-12">
-                Bias audit table will appear here once Agent 03 completes.
-              </p>
+            <div id="tab-panel-reflection" class="hidden space-y-4">
+              <p class="text-zinc-500 text-center py-12 text-[12px]">Reflection & bias calibration audit will stream here as Agent 03 completes.</p>
             </div>
 
             <!-- Tab 4: Export -->
-            <div id="tab-panel-export" class="hidden space-y-6">
-              <div class="p-6 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-3">
-                <h4 class="font-display text-xl font-bold text-slate-900">
-                  Export Complete Assessment Package
-                </h4>
-                <p class="text-sm text-slate-600">
-                  Use the <strong>Export .MD</strong> or <strong>Printable Report (.HTML / PDF)</strong> buttons in the dark scorecard header above to download the full evaluation artifact.
+            <div id="tab-panel-export" class="hidden space-y-4">
+              <div class="card-inner rounded-xl p-6 space-y-3">
+                <h4 class="text-[16px] font-semibold text-white">Export Assessment</h4>
+                <p class="text-[12px] text-zinc-500 leading-relaxed">
+                  Download the report as <code class="font-mono text-violet-300">.md</code> or open the formatted <code class="font-mono text-violet-300">.html / PDF</code> using the buttons in the scorecard header.
                 </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
 
-    <!-- SLIDE-OVER DRAWER: PAST EVALUATIONS ARCHIVE -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  HISTORY DRAWER                                    -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <div id="history-drawer-modal" class="fixed inset-0 z-50 hidden">
-      <div id="history-drawer-backdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
+      <div id="history-drawer-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
       <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
-        <div class="w-screen max-w-md bg-white shadow-2xl border-l-2 border-slate-300 flex flex-col justify-between">
-          <div class="p-6 bg-[#0B0F19] text-white flex items-center justify-between">
+        <div class="w-screen max-w-md bg-surface-1 border-l border-edge flex flex-col justify-between shadow-2xl shadow-black/50">
+          <div class="p-5 border-b border-edge flex items-center justify-between">
             <div>
-              <span class="text-xs font-mono uppercase tracking-wider text-blue-400">SQLite Archive</span>
-              <h2 class="font-display text-xl font-bold">Past Evaluations</h2>
+              <span class="label text-teal-400/80">SQLite Persistence</span>
+              <h2 class="text-[18px] font-bold text-white">Evaluation History</h2>
             </div>
             <div class="flex items-center gap-2">
               <button
                 id="refresh-history-btn"
                 type="button"
-                class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-              >
-                Refresh
-              </button>
+                class="btn text-[11px] font-mono px-3 py-1.5 rounded-lg bg-surface-3 hover:bg-surface-4 text-zinc-300 border border-edge"
+              >Refresh</button>
               <button
                 id="close-history-drawer-btn"
                 type="button"
-                class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center text-lg"
-              >
-                &times;
-              </button>
+                class="btn w-8 h-8 rounded-lg bg-surface-3 hover:bg-surface-4 text-zinc-300 flex items-center justify-center"
+              >&times;</button>
             </div>
           </div>
 
-          <div id="evaluations-history-list" class="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50">
-            <div class="text-sm text-slate-500 py-10 text-center">
-              No evaluations recorded yet.
-            </div>
+          <div id="evaluations-history-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <div class="text-[12px] text-zinc-600 py-10 text-center">No evaluations recorded yet.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MODAL: CREATE CUSTOM ASSIGNMENT -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  CREATE ASSIGNMENT MODAL                           -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <div
       id="new-assignment-modal"
-      class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div class="panel-box max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white shadow-2xl">
-        <div class="panel-header px-6 py-5 flex items-center justify-between">
+      <div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/50">
+        <div class="px-6 py-5 border-b border-edge flex items-center justify-between">
           <div>
-            <span class="text-xs font-mono font-bold uppercase text-blue-600">New Benchmark</span>
-            <h2 class="font-display text-2xl font-bold text-slate-900">Create Custom Assignment</h2>
+            <span class="label text-violet-400/80">Benchmark Authoring</span>
+            <h2 class="text-[18px] font-bold text-white mt-0.5">Create Assignment</h2>
           </div>
           <button
             id="close-new-assignment-btn"
             type="button"
-            class="w-9 h-9 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-lg flex items-center justify-center"
-          >
-            &times;
-          </button>
+            class="btn w-8 h-8 rounded-lg bg-surface-3 hover:bg-surface-4 text-zinc-300 flex items-center justify-center text-lg"
+          >&times;</button>
         </div>
 
-        <form id="new-assignment-form" class="p-6 space-y-5 text-sm">
+        <form id="new-assignment-form" class="p-6 space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="sm:col-span-2">
-              <label for="new-assign-title" class="block font-bold text-slate-800 mb-1.5">
-                Assignment Title
-              </label>
+              <label for="new-assign-title" class="block text-[12px] font-semibold text-zinc-300 mb-1.5">Assignment Title</label>
               <input
                 id="new-assign-title"
                 type="text"
                 required
-                placeholder="e.g., CS301: Concurrent Raft Consensus"
-                class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
+                placeholder="e.g., CS301: Distributed Raft Consensus"
+                class="input w-full"
               />
             </div>
             <div>
-              <label for="new-assign-type" class="block font-bold text-slate-800 mb-1.5">
-                Modality
-              </label>
-              <select
-                id="new-assign-type"
-                class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-blue-600"
-              >
+              <label for="new-assign-type" class="block text-[12px] font-semibold text-zinc-300 mb-1.5">Modality</label>
+              <select id="new-assign-type" class="input w-full">
                 <option value="code">Code</option>
                 <option value="theory">Theory / Written</option>
                 <option value="hybrid">Hybrid</option>
@@ -1035,11 +874,9 @@
 
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label for="new-assign-prompt" class="font-bold text-slate-800">
-                Assignment Prompt
-              </label>
-              <label class="text-blue-600 hover:text-blue-800 cursor-pointer text-xs font-bold">
-                <span>Upload File (.md/.txt/.pdf)</span>
+              <label for="new-assign-prompt" class="text-[12px] font-semibold text-zinc-300">Assignment Prompt</label>
+              <label class="text-violet-400 hover:text-violet-300 cursor-pointer text-[11px] font-mono font-medium">
+                <span>+ Upload</span>
                 <input id="new-assign-prompt-file" type="file" accept=".md,.txt,.pdf,.ipynb" class="hidden" />
               </label>
             </div>
@@ -1047,18 +884,16 @@
               id="new-assign-prompt"
               rows="4"
               required
-              placeholder="Paste the problem description and requirements..."
-              class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3.5 text-slate-900 focus:outline-none focus:border-blue-600"
+              placeholder="Describe the assignment problem..."
+              class="input w-full resize-y"
             ></textarea>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label for="new-assign-rubric" class="font-bold text-slate-800">
-                Grading Rubric Guidelines
-              </label>
-              <label class="text-blue-600 hover:text-blue-800 cursor-pointer text-xs font-bold">
-                <span>Upload File (.md/.txt/.pdf)</span>
+              <label for="new-assign-rubric" class="text-[12px] font-semibold text-zinc-300">Grading Rubric</label>
+              <label class="text-violet-400 hover:text-violet-300 cursor-pointer text-[11px] font-mono font-medium">
+                <span>+ Upload</span>
                 <input id="new-assign-rubric-file" type="file" accept=".md,.txt,.pdf,.json" class="hidden" />
               </label>
             </div>
@@ -1067,47 +902,47 @@
               rows="4"
               required
               placeholder="List criteria and point weights..."
-              class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3.5 text-slate-900 focus:outline-none focus:border-blue-600"
+              class="input w-full resize-y"
             ></textarea>
           </div>
 
           <div>
-            <label for="new-assign-reference" class="block font-bold text-slate-800 mb-1.5">
-              Reference Solution (Optional)
-            </label>
+            <label for="new-assign-reference" class="block text-[12px] font-semibold text-zinc-300 mb-1.5">Reference Solution (Optional)</label>
             <textarea
               id="new-assign-reference"
               rows="3"
-              placeholder="Optional reference solution or grading notes..."
-              class="w-full font-mono text-xs bg-slate-50 border-2 border-slate-300 rounded-xl p-3.5 text-slate-900 focus:outline-none focus:border-blue-600"
+              placeholder="Optional reference code or solution notes..."
+              class="input w-full font-mono resize-y"
             ></textarea>
           </div>
 
-          <label class="flex items-center gap-2.5 text-slate-700 font-medium cursor-pointer">
-            <input id="new-assign-parse-now" type="checkbox" class="rounded border-slate-400 text-blue-600 w-4 h-4" />
-            <span>Immediately parse structured rubric via Gemini API</span>
+          <label class="flex items-center gap-2.5 text-[12px] text-zinc-400 cursor-pointer select-none hover:text-zinc-300 transition-colors">
+            <input id="new-assign-parse-now" type="checkbox" class="rounded border-zinc-600 bg-surface-0 text-violet-500 w-4 h-4" />
+            <span>Parse rubric via Gemini API immediately</span>
           </label>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t-2 border-slate-200">
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-edge">
             <button
               id="cancel-new-assignment-btn"
               type="button"
-              class="px-5 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 font-bold hover:bg-slate-100"
-            >
-              Cancel
-            </button>
+              class="btn px-4 py-2 rounded-lg border border-edge text-zinc-300 hover:bg-surface-3 font-semibold text-[13px]"
+            >Cancel</button>
             <button
               id="submit-new-assignment-btn"
               type="submit"
-              class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-display font-bold shadow-sm"
-            >
-              Create Assignment
-            </button>
+              class="btn btn-primary px-5 py-2 rounded-lg font-semibold text-[13px]"
+            >Create Assignment</button>
           </div>
         </form>
       </div>
     </div>
 
     <script src="/static/app.js"></script>
+    <script>
+      // Initialize Lucide icons after DOM load
+      document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== "undefined") lucide.createIcons();
+      });
+    </script>
   </body>
 </html>

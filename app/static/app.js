@@ -2,13 +2,13 @@
   "use strict";
 
   const state = {
-    activeStep: 1,
     assignments: [],
     sampleSubmissions: {},
     activeAssignmentId: null,
     evaluations: [],
     activeEvaluation: null,
     submissionPdfBase64: null,
+    userEditedSubmission: false,
     livePartial: {
       rubric: null,
       initialEval: null,
@@ -26,6 +26,12 @@
 
   const el = (id) => document.getElementById(id);
 
+  function refreshIcons() {
+    if (typeof lucide !== "undefined" && lucide.createIcons) {
+      lucide.createIcons();
+    }
+  }
+
   function escapeHtml(value) {
     if (value === null || value === undefined) return "";
     return String(value)
@@ -34,31 +40,6 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
-  }
-
-  function switchStep(stepNumber) {
-    state.activeStep = Number(stepNumber);
-    [1, 2, 3].forEach((n) => {
-      const view = el(`view-step-${n}`);
-      if (!view) return;
-      if (n === state.activeStep) {
-        view.classList.remove("hidden");
-        view.classList.remove("view-animate");
-        void view.offsetWidth;
-        view.classList.add("view-animate");
-      } else {
-        view.classList.add("hidden");
-      }
-    });
-
-    document.querySelectorAll(".step-nav-btn").forEach((btn) => {
-      const target = Number(btn.getAttribute("data-step-target"));
-      if (target === state.activeStep) {
-        btn.classList.add("active");
-      } else {
-        btn.classList.remove("active");
-      }
-    });
   }
 
   function showBanner(message, isError = false) {
@@ -71,10 +52,10 @@
     wrapper.classList.remove("hidden");
     if (isError) {
       inner.className =
-        "rounded-xl px-5 py-3.5 text-sm font-semibold flex items-center justify-between border-2 bg-rose-50 border-rose-300 text-rose-900 shadow-sm";
+        "rounded-xl px-4 py-3 text-[13px] font-medium flex items-center justify-between border bg-red-950/90 border-red-500/40 text-red-200 shadow-lg animate-enter";
     } else {
       inner.className =
-        "rounded-xl px-5 py-3.5 text-sm font-semibold flex items-center justify-between border-2 bg-emerald-50 border-emerald-300 text-emerald-900 shadow-sm";
+        "rounded-xl px-4 py-3 text-[13px] font-medium flex items-center justify-between border bg-emerald-950/90 border-emerald-500/40 text-emerald-200 shadow-lg animate-enter";
     }
   }
 
@@ -87,7 +68,10 @@
     const headers = { ...extra };
     const apiKey = el("api-key-input")?.value.trim();
     const model = el("model-select")?.value.trim();
-    if (apiKey) headers["X-Gemini-Key"] = apiKey;
+    if (apiKey) {
+      headers["X-Gemini-Api-Key"] = apiKey;
+      headers["X-Gemini-Key"] = apiKey;
+    }
     if (model) headers["X-Gemini-Model"] = model;
     return headers;
   }
@@ -98,22 +82,63 @@
     return num > 0 ? `+${num.toFixed(1)}` : num.toFixed(1);
   }
 
+  function updateScoreRing(percentage) {
+    const ring = el("score-ring-progress");
+    if (!ring) return;
+    const circumference = 213.6;
+    const clamped = Math.max(0, Math.min(100, Number(percentage || 0)));
+    const offset = circumference - (clamped / 100) * circumference;
+    ring.style.strokeDashoffset = String(offset.toFixed(1));
+    if (clamped >= 85) {
+      ring.setAttribute("stroke", "#34d399"); // success emerald
+    } else if (clamped >= 70) {
+      ring.setAttribute("stroke", "#8b5cf6"); // violet accent
+    } else if (clamped >= 55) {
+      ring.setAttribute("stroke", "#fbbf24"); // warning amber
+    } else {
+      ring.setAttribute("stroke", "#f87171"); // danger red
+    }
+  }
+
+  function switchLeftPane(mode) {
+    const editorPane = el("left-pane-editor");
+    const specPane = el("left-pane-spec");
+    const editorBtn = el("left-tab-editor-btn");
+    const specBtn = el("left-tab-spec-btn");
+    if (!editorPane || !specPane || !editorBtn || !specBtn) return;
+
+    if (mode === "spec") {
+      editorPane.classList.add("hidden");
+      specPane.classList.remove("hidden");
+      specBtn.className =
+        "px-3 py-1.5 rounded-md text-[12px] font-semibold bg-accent-dim text-violet-300 border border-accent-border transition-all";
+      editorBtn.className =
+        "px-3 py-1.5 rounded-md text-[12px] font-medium text-zinc-500 hover:text-zinc-300 border border-transparent transition-all";
+    } else {
+      specPane.classList.add("hidden");
+      editorPane.classList.remove("hidden");
+      editorBtn.className =
+        "px-3 py-1.5 rounded-md text-[12px] font-semibold bg-accent-dim text-violet-300 border border-accent-border transition-all";
+      specBtn.className =
+        "px-3 py-1.5 rounded-md text-[12px] font-medium text-zinc-500 hover:text-zinc-300 border border-transparent transition-all";
+    }
+  }
+
   function resetPipelineStepper(statusLabel = "Idle · Ready") {
     const overall = el("pipeline-overall-status");
     if (overall) {
       overall.textContent = statusLabel;
       overall.className =
-        "text-sm font-mono font-bold px-4 py-2 rounded-xl bg-slate-200 text-slate-800 border border-slate-300 tabular-nums";
+        "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-surface-0 text-zinc-400 border border-edge tabular-nums";
     }
     for (const stage of STAGES) {
       const card = el(`stage-${stage}`);
       if (!card) continue;
-      card.className =
-        "stage-card border-2 border-slate-200 rounded-2xl p-5 bg-slate-50 transition-all";
+      card.className = "stage-card card-inner rounded-xl p-4 relative overflow-hidden";
       const ind = card.querySelector(".stage-indicator");
       if (ind) {
-        ind.innerHTML = `<span class="text-slate-500">waiting</span>`;
-        ind.className = "stage-indicator text-xs font-mono font-semibold text-slate-500 tabular-nums";
+        ind.innerHTML = `<span class="text-zinc-500">standby</span>`;
+        ind.className = "stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums";
       }
     }
   }
@@ -125,37 +150,37 @@
 
     if (mode === "running") {
       card.className =
-        "stage-card border-2 border-blue-600 rounded-2xl p-5 bg-blue-50/70 stage-running transition-all";
+        "stage-card card-inner node-running rounded-xl p-4 relative overflow-hidden";
       if (ind) {
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1.5 text-blue-700 font-bold">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-            <span>running...</span>
+          <span class="inline-flex items-center gap-1.5 text-violet-300 font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping"></span>
+            <span>active...</span>
           </span>
         `;
-        ind.className = "stage-indicator text-xs font-mono tabular-nums";
+        ind.className = "stage-indicator text-[10px] font-mono tabular-nums";
       }
     } else if (mode === "complete") {
       card.className =
-        "stage-card border-2 border-emerald-500 rounded-2xl p-5 bg-emerald-50/50 transition-all";
+        "stage-card card-inner node-complete rounded-xl p-4 relative overflow-hidden";
       if (ind) {
         const label = escapeHtml(extraText || "done");
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1.5 text-emerald-800 font-bold">
-            <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.8">
-              <path class="check-animated" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          <span class="inline-flex items-center gap-1 text-emerald-300 font-semibold">
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
+              <path class="svg-check-anim" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <span>${label}</span>
           </span>
         `;
-        ind.className = "stage-indicator text-xs font-mono tabular-nums";
+        ind.className = "stage-indicator text-[10px] font-mono tabular-nums";
       }
     } else if (mode === "error") {
       card.className =
-        "stage-card border-2 border-rose-500 rounded-2xl p-5 bg-rose-50 transition-all";
+        "stage-card card-inner node-error rounded-xl p-4 relative overflow-hidden";
       if (ind) {
-        ind.textContent = "error";
-        ind.className = "stage-indicator text-xs font-mono text-rose-700 font-bold";
+        ind.textContent = "failed";
+        ind.className = "stage-indicator text-[10px] font-mono text-rose-400 font-semibold";
       }
     }
   }
@@ -165,7 +190,7 @@
     if (!container) return;
 
     if (!rubric || !Array.isArray(rubric.criteria) || rubric.criteria.length === 0) {
-      container.innerHTML = `<div class="p-4 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm text-slate-500">No structured rubric cached yet. Click <strong>Parse / Refresh Rubric</strong> above or run an evaluation to parse automatically.</div>`;
+      container.innerHTML = `<div class="p-4 rounded-xl bg-surface-0 border border-edge text-[12px] text-zinc-500">No structured rubric cached yet. Click <strong>Parse / Refresh</strong> above or run an evaluation to parse automatically.</div>`;
       return;
     }
 
@@ -174,40 +199,38 @@
         const bandsHtml = (c.scoring_bands || [])
           .map(
             (b) =>
-              `<span class="inline-block bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-mono font-medium text-slate-700">${escapeHtml(
+              `<span class="inline-block bg-surface-2 border border-edge rounded px-2 py-0.5 text-[10px] font-mono text-zinc-400">${escapeHtml(
                 b.band_label
-              )}: <strong>${escapeHtml(b.points_range)} pts</strong></span>`
+              )}: <strong class="text-violet-300">${escapeHtml(b.points_range)} pts</strong></span>`
           )
           .join(" ");
         return `
-        <div class="border-2 border-slate-200 rounded-xl overflow-hidden bg-white">
-          <div class="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2">
-            <span class="font-display font-bold text-base text-slate-900">${escapeHtml(
+        <div class="rounded-xl p-4 bg-surface-0 border border-edge space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-semibold text-[13px] text-white">${escapeHtml(
               c.criterion_id
             )} · ${escapeHtml(c.title)}</span>
-            <span class="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-blue-600 text-white tabular-nums">${Number(
+            <span class="font-mono font-bold text-[11px] px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border tabular-nums">${Number(
               c.max_points
             ).toFixed(1)} pts</span>
           </div>
-          <div class="p-4 space-y-2.5">
-            <p class="text-slate-700 text-sm leading-relaxed">${escapeHtml(c.description)}</p>
-            <div class="flex flex-wrap gap-1.5 pt-1">${bandsHtml}</div>
-          </div>
+          <p class="text-zinc-400 text-[12px] leading-relaxed">${escapeHtml(c.description)}</p>
+          <div class="flex flex-wrap gap-1.5 pt-1">${bandsHtml}</div>
         </div>
       `;
       })
       .join("");
 
     container.innerHTML = `
-      <div class="flex items-center justify-between bg-[#0B0F19] text-white px-4 py-3 rounded-xl mb-3">
-        <span class="font-display font-bold text-sm">${escapeHtml(
+      <div class="flex items-center justify-between bg-accent-dim border border-accent-border px-3.5 py-2.5 rounded-xl mb-3 text-[12px]">
+        <span class="font-semibold text-violet-200">${escapeHtml(
           rubric.assignment_title || "Parsed Rubric"
         )}</span>
-        <span class="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 tabular-nums">Total: ${Number(
+        <span class="font-mono font-bold text-emerald-300 tabular-nums">Total: ${Number(
           rubric.total_points || 0
         ).toFixed(1)} pts</span>
       </div>
-      <div class="space-y-3">${criteriaHtml}</div>
+      <div class="space-y-2.5">${criteriaHtml}</div>
     `;
   }
 
@@ -216,48 +239,41 @@
     if (!container) return;
 
     if (state.assignments.length === 0) {
-      container.innerHTML = `<div class="text-sm text-slate-500 py-8 text-center">No assignments found. Click "Reset Demos" above to load samples.</div>`;
+      container.innerHTML = `<span class="text-[12px] text-zinc-500 font-mono">No benchmarks found. Click "Reset Demos".</span>`;
       return;
     }
 
     container.innerHTML = state.assignments
       .map((a) => {
         const isSelected = a.id === state.activeAssignmentId;
-        const typeBadge =
+        const typeDot =
           a.assignment_type === "code"
-            ? "bg-blue-100 text-blue-800 border-blue-300"
+            ? "bg-violet-400"
             : a.assignment_type === "theory"
-            ? "bg-amber-100 text-amber-900 border-amber-300"
-            : "bg-teal-100 text-teal-900 border-teal-300";
-        const rubricStatus = a.structured_rubric ? "✓ Rubric Parsed" : "Raw Rubric";
+            ? "bg-amber-400"
+            : "bg-teal-400";
 
         return `
         <div
           data-assignment-id="${escapeHtml(a.id)}"
-          class="assign-card-item rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between gap-3 border-2 ${
+          class="assign-card-item btn inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg cursor-pointer text-[12px] border transition-all ${
             isSelected
-              ? "bg-blue-50/80 border-blue-600 shadow-sm"
-              : "bg-slate-50 border-slate-200 hover:border-slate-400 hover:bg-white"
+              ? "bg-accent-dim border-accent-border text-white shadow-sm"
+              : "bg-surface-2 border-edge text-zinc-400 hover:text-zinc-200 hover:bg-surface-3"
           }"
         >
-          <div class="min-w-0 flex-1 space-y-2">
-            <div class="font-display font-bold text-base text-slate-900 leading-snug">
-              ${escapeHtml(a.title)}
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-xs font-mono font-bold uppercase px-2.5 py-0.5 rounded-md border ${typeBadge}">
-                ${escapeHtml(a.assignment_type)}
-              </span>
-              <span class="text-xs font-mono font-medium text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
-                ${rubricStatus}
-              </span>
-            </div>
-          </div>
+          <span class="w-1.5 h-1.5 rounded-full ${typeDot}"></span>
+          <span class="font-medium truncate max-w-[200px] sm:max-w-[240px]">${escapeHtml(
+            a.title
+          )}</span>
+          <span class="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-black/40 text-zinc-500">${escapeHtml(
+            a.assignment_type
+          )}</span>
           <button
             type="button"
             data-delete-assignment="${escapeHtml(a.id)}"
-            title="Delete assignment"
-            class="w-7 h-7 rounded-lg bg-white hover:bg-rose-100 text-slate-400 hover:text-rose-700 border border-slate-200 flex items-center justify-center font-bold text-base shrink-0"
+            title="Delete benchmark"
+            class="text-zinc-500 hover:text-rose-400 ml-0.5 font-bold leading-none"
           >
             &times;
           </button>
@@ -271,6 +287,7 @@
         const delBtn = e.target.closest("[data-delete-assignment]");
         if (delBtn) return;
         const id = row.getAttribute("data-assignment-id");
+        state.userEditedSubmission = false;
         selectAssignment(id);
       });
     });
@@ -294,14 +311,12 @@
     const typeBadgeEl = el("assignment-type-badge");
     const promptEl = el("assignment-prompt-view");
     const refEl = el("assignment-reference-view");
-    const step2Label = el("step2-active-assignment-label");
 
     if (!active) {
       if (titleEl) titleEl.textContent = "Select an Assignment";
       if (typeBadgeEl) typeBadgeEl.textContent = "--";
       if (promptEl) promptEl.textContent = "No assignment selected.";
       if (refEl) refEl.textContent = "No reference solution.";
-      if (step2Label) step2Label.textContent = "No assignment selected";
       renderStructuredRubric(null);
       return;
     }
@@ -313,10 +328,24 @@
       refEl.textContent =
         active.reference_solution_text || "No reference solution provided.";
     }
-    if (step2Label) {
-      step2Label.textContent = `${active.title} (${active.assignment_type.toUpperCase()})`;
-    }
     renderStructuredRubric(active.structured_rubric);
+
+    // Auto-fill sample submission for the active assignment if the user hasn't typed custom work
+    if (!state.userEditedSubmission && state.sampleSubmissions[active.id]) {
+      const sample = state.sampleSubmissions[active.id];
+      if (el("student-name-input")) el("student-name-input").value = sample.student_name || "Alex Rivera";
+      if (el("student-id-input")) el("student-id-input").value = sample.student_id || "STU-2049";
+      if (el("submission-filename-input"))
+        el("submission-filename-input").value = sample.submission_filename || "submission.py";
+      if (el("submission-text-input"))
+        el("submission-text-input").value = sample.submission_text || "";
+      state.submissionPdfBase64 = null;
+      const badge = el("ingested-file-badge");
+      if (badge) {
+        badge.textContent = `Sample: ${sample.submission_filename}`;
+        badge.classList.remove("hidden");
+      }
+    }
   }
 
   function renderEvaluationsHistory() {
@@ -328,7 +357,7 @@
     if (!container) return;
 
     if (state.evaluations.length === 0) {
-      container.innerHTML = `<div class="text-sm text-slate-500 py-10 text-center">No evaluations recorded yet.</div>`;
+      container.innerHTML = `<div class="text-[12px] text-zinc-600 py-10 text-center">No evaluations recorded yet.</div>`;
       return;
     }
 
@@ -337,32 +366,32 @@
         const isSelected = state.activeEvaluation && state.activeEvaluation.id === ev.id;
         const statusColor =
           ev.status === "completed"
-            ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+            ? "bg-success-dim text-emerald-300 border-success-border"
             : ev.status === "failed"
-            ? "bg-rose-100 text-rose-900 border-rose-300"
-            : "bg-amber-100 text-amber-900 border-amber-300";
+            ? "bg-danger-dim text-rose-300 border-danger-border"
+            : "bg-warn-dim text-amber-300 border-warn-border";
         return `
         <div
           data-eval-id="${escapeHtml(ev.id)}"
-          class="eval-history-row rounded-xl p-4 cursor-pointer transition-all flex items-center justify-between gap-3 border-2 ${
+          class="eval-history-row btn rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between gap-3 border ${
             isSelected
-              ? "bg-blue-50 border-blue-600 shadow-sm"
-              : "bg-white border-slate-200 hover:border-slate-400"
+              ? "bg-accent-dim border-accent-border text-white shadow-sm"
+              : "bg-surface-2 border-edge text-zinc-300 hover:bg-surface-3"
           }"
         >
           <div class="min-w-0">
-            <div class="font-display font-bold text-base text-slate-900 truncate">
+            <div class="text-[13px] font-semibold text-white truncate">
               ${escapeHtml(ev.student_name)}
-              <span class="text-slate-500 font-normal text-sm">${
+              <span class="text-zinc-500 font-normal">${
                 ev.student_id ? `(${escapeHtml(ev.student_id)})` : ""
               }</span>
             </div>
-            <div class="text-xs text-slate-600 truncate font-mono mt-0.5">${escapeHtml(
+            <div class="text-[11px] text-zinc-500 truncate font-mono mt-0.5">${escapeHtml(
               ev.submission_filename
             )}</div>
           </div>
           <div class="text-right shrink-0">
-            <span class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg border tabular-nums ${statusColor}">
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border tabular-nums ${statusColor}">
               ${
                 ev.status === "completed"
                   ? `${Number(ev.total_final_score).toFixed(1)}/${Number(
@@ -383,7 +412,6 @@
         if (!id) return;
         await loadEvaluationById(id);
         el("history-drawer-modal")?.classList.add("hidden");
-        switchStep(3);
       });
     });
   }
@@ -392,16 +420,16 @@
     const panel = el("tab-panel-feedback");
     if (!panel) return;
     if (!feedback) {
-      panel.innerHTML = `<p class="text-slate-500 text-center py-12 text-base">No pedagogical feedback available for this evaluation.</p>`;
+      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No pedagogical feedback available for this evaluation.</p>`;
       return;
     }
 
     const strengthsHtml = (feedback.key_strengths || [])
       .map(
         (s) => `
-        <li class="flex items-start gap-3 p-4 rounded-xl bg-emerald-50/80 border-2 border-emerald-200">
-          <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shrink-0 mt-0.5">&check;</span>
-          <span class="text-slate-900 text-sm font-medium leading-relaxed">${escapeHtml(s)}</span>
+        <li class="flex items-start gap-3 p-3.5 rounded-xl bg-success-dim border border-success-border">
+          <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">&check;</span>
+          <span class="text-zinc-200 text-[13px] leading-relaxed">${escapeHtml(s)}</span>
         </li>`
       )
       .join("");
@@ -409,39 +437,29 @@
     const gapsHtml = (feedback.learning_gaps || [])
       .map(
         (g, idx) => `
-        <div class="border-2 border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-          <div class="bg-slate-100 px-5 py-3.5 border-b-2 border-slate-200 flex items-center gap-3">
-            <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-blue-600 text-white">
-              Gap 0${idx + 1}
+        <div class="card-inner rounded-xl overflow-hidden">
+          <div class="px-5 py-3 bg-surface-3 border-b border-edge flex items-center gap-2.5">
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border">
+              GAP 0${idx + 1}
             </span>
-            <h5 class="font-display text-lg font-bold text-slate-900">${escapeHtml(
+            <h5 class="text-[14px] font-semibold text-white">${escapeHtml(
               g.concept_or_skill
             )}</h5>
           </div>
           <div class="p-5 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="bg-rose-50/60 p-4 rounded-xl border-2 border-rose-200">
-                <div class="font-mono text-xs uppercase font-bold text-rose-800 mb-1.5">
-                  Observed Issue in Submission
-                </div>
-                <p class="text-slate-800 text-sm leading-relaxed">${escapeHtml(
-                  g.observed_issue
-                )}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[12px]">
+              <div class="bg-danger-dim p-3.5 rounded-xl border border-danger-border">
+                <div class="label text-rose-300 mb-1">Observed Flaw</div>
+                <p class="text-zinc-200 leading-relaxed">${escapeHtml(g.observed_issue)}</p>
               </div>
-              <div class="bg-emerald-50/60 p-4 rounded-xl border-2 border-emerald-200">
-                <div class="font-mono text-xs uppercase font-bold text-emerald-800 mb-1.5">
-                  Actionable Fix
-                </div>
-                <p class="text-slate-800 text-sm leading-relaxed">${escapeHtml(
-                  g.actionable_fix
-                )}</p>
+              <div class="bg-success-dim p-3.5 rounded-xl border border-success-border">
+                <div class="label text-emerald-300 mb-1">Actionable Fix</div>
+                <p class="text-zinc-200 leading-relaxed">${escapeHtml(g.actionable_fix)}</p>
               </div>
             </div>
-            <div>
-              <div class="font-mono text-xs uppercase font-bold text-slate-600 mb-1.5">
-                Conceptual Hint &amp; Exemplar Pattern
-              </div>
-              <pre class="bg-[#0B0F19] text-slate-100 font-mono text-xs p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border-2 border-slate-800">${escapeHtml(
+            <div class="space-y-1.5">
+              <div class="label">Exemplar Pattern / Code Hint</div>
+              <pre class="bg-surface-0 text-violet-200 font-mono text-[12px] p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-edge">${escapeHtml(
                 g.example_or_hint
               )}</pre>
             </div>
@@ -454,11 +472,11 @@
     const roadmapHtml = (feedback.revision_roadmap || [])
       .map(
         (step, idx) =>
-          `<li class="flex items-start gap-3.5 p-4 rounded-xl bg-slate-50 border-2 border-slate-200">
-            <span class="font-display font-bold text-sm w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">${
+          `<li class="flex items-start gap-3 p-3.5 rounded-xl bg-surface-2 border border-edge">
+            <span class="font-mono font-bold text-[11px] w-5 h-5 rounded-md bg-violet-600 text-white flex items-center justify-center shrink-0 mt-0.5">${
               idx + 1
             }</span>
-            <span class="text-sm font-medium text-slate-800 leading-relaxed pt-0.5">${escapeHtml(
+            <span class="text-[13px] text-zinc-200 leading-relaxed">${escapeHtml(
               step
             )}</span>
           </li>`
@@ -466,59 +484,47 @@
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-8">
-        <!-- Executive Summary Box -->
-        <div class="bg-blue-50/80 border-2 border-blue-200 rounded-2xl p-6 space-y-2">
-          <div class="text-xs font-mono font-bold uppercase tracking-wider text-blue-800">
-            Executive Assessment Summary
-          </div>
-          <p class="text-slate-900 text-base leading-relaxed font-medium">${escapeHtml(
+      <div class="space-y-6 animate-enter">
+        <div class="rounded-xl p-5 bg-accent-dim border border-accent-border space-y-1.5">
+          <div class="label text-violet-300">Executive Synthesis</div>
+          <p class="text-white text-[14px] leading-relaxed">${escapeHtml(
             feedback.executive_summary
           )}</p>
         </div>
 
-        <!-- Key Strengths -->
         <div class="space-y-3">
-          <h4 class="font-display text-xl font-bold text-slate-900">
-            Demonstrated Strengths
-          </h4>
-          <ul class="grid grid-cols-1 gap-3">${
-            strengthsHtml || "<li class='text-sm text-slate-500'>None noted.</li>"
+          <h4 class="text-[15px] font-semibold text-white">Demonstrated Strengths</h4>
+          <ul class="grid grid-cols-1 gap-2">${
+            strengthsHtml || "<li class='text-[12px] text-zinc-500'>None noted.</li>"
           }</ul>
         </div>
 
-        <!-- Learning Gaps -->
-        <div class="space-y-4">
-          <h4 class="font-display text-xl font-bold text-slate-900">
-            Actionable Learning Gaps &amp; Coaching
-          </h4>
-          <div class="space-y-5">${
+        <div class="space-y-3">
+          <h4 class="text-[15px] font-semibold text-white">Actionable Learning Gaps &amp; Coaching</h4>
+          <div class="space-y-3">${
             gapsHtml ||
-            "<p class='text-sm text-slate-500'>No major learning gaps identified.</p>"
+            "<p class='text-[12px] text-zinc-500'>No major learning gaps identified.</p>"
           }</div>
         </div>
 
-        <!-- Revision Roadmap -->
         <div class="space-y-3">
-          <h4 class="font-display text-xl font-bold text-slate-900">
-            Priority Revision Roadmap
-          </h4>
-          <ol class="space-y-2.5">${roadmapHtml}</ol>
+          <h4 class="text-[15px] font-semibold text-white">Priority Revision Roadmap</h4>
+          <ol class="space-y-2">${roadmapHtml}</ol>
         </div>
 
-        <!-- Encouraging Closing -->
-        <blockquote class="border-l-4 border-emerald-600 bg-emerald-50 px-6 py-4 text-emerald-950 font-medium text-base italic rounded-r-xl">
+        <blockquote class="border-l-2 border-emerald-400 bg-success-dim px-4 py-3 text-emerald-200 text-[13px] italic rounded-r-xl">
           &ldquo;${escapeHtml(feedback.encouraging_closing)}&rdquo;
         </blockquote>
       </div>
     `;
+    refreshIcons();
   }
 
   function renderCriteriaTab(initialEval, reflectionAudit) {
     const panel = el("tab-panel-criteria");
     if (!panel) return;
     if (!initialEval || !Array.isArray(initialEval.criterion_evaluations)) {
-      panel.innerHTML = `<p class="text-slate-500 text-center py-12 text-base">No criterion evaluations available.</p>`;
+      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No criterion evaluations available.</p>`;
       return;
     }
 
@@ -540,7 +546,7 @@
         const quotesHtml = (ce.student_evidence_quotes || [])
           .map(
             (q) =>
-              `<pre class="bg-[#0B0F19] text-amber-300 font-mono text-xs p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border-2 border-slate-800">${escapeHtml(
+              `<pre class="bg-surface-0 text-amber-300 font-mono text-[11px] p-3 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed border border-edge">${escapeHtml(
                 q
               )}</pre>`
           )
@@ -555,66 +561,62 @@
           .join("");
 
         return `
-        <div class="border-2 border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-          <!-- Criterion Header Bar -->
-          <div class="bg-slate-100 px-6 py-4 border-b-2 border-slate-200 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white">${escapeHtml(
+        <div class="card-inner rounded-xl overflow-hidden">
+          <div class="px-5 py-3.5 bg-surface-3 border-b border-edge flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border">${escapeHtml(
                 ce.criterion_id
               )}</span>
-              <h5 class="font-display text-xl font-bold text-slate-900">${escapeHtml(
+              <h5 class="text-[14px] font-semibold text-white">${escapeHtml(
                 ce.criterion_title
               )}</h5>
             </div>
-            <div class="flex items-center gap-2 font-mono text-xs tabular-nums">
-              <span class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">Init: ${Number(
+            <div class="flex items-center gap-2 font-mono text-[11px] tabular-nums">
+              <span class="px-2.5 py-1 rounded-md bg-surface-1 border border-edge text-zinc-400">Init: ${Number(
                 ce.initial_score
               ).toFixed(1)}</span>
-              <span class="text-slate-400 font-bold">&rarr;</span>
-              <span class="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white font-bold">Final: ${Number(
+              <span class="text-zinc-600">&rarr;</span>
+              <span class="px-2.5 py-1 rounded-md bg-violet-600 text-white font-bold">Final: ${Number(
                 finalScore
               ).toFixed(1)} / ${Number(ce.max_points).toFixed(1)}</span>
-              <span class="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold uppercase">${escapeHtml(
+              <span class="px-2 py-0.5 rounded-md bg-success-dim text-emerald-300 border border-success-border text-[10px] uppercase">${escapeHtml(
                 verdict
               )}</span>
             </div>
           </div>
 
-          <div class="p-6 space-y-5">
-            <!-- Score Progress Bar -->
-            <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-600 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
+          <div class="p-5 space-y-4">
+            <div class="w-full h-1 bg-surface-0 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-violet-500 to-teal-400 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
                 1
               )}%"></div>
             </div>
 
-            <p class="text-slate-800 text-sm leading-relaxed"><strong class="font-bold text-slate-950">Scoring Rationale:</strong> ${escapeHtml(
+            <p class="text-zinc-300 text-[13px] leading-relaxed"><strong class="text-white">Rationale:</strong> ${escapeHtml(
               ce.rationale
             )}</p>
 
-            <div class="bg-slate-50 border-l-4 border-blue-600 p-4 rounded-r-xl border border-slate-200 space-y-1.5">
-              <div class="text-xs font-mono font-bold uppercase tracking-wider text-blue-800">
-                Chain-of-Thought Verification Trace
-              </div>
-              <p class="text-slate-700 font-mono text-xs whitespace-pre-wrap leading-relaxed">${escapeHtml(
+            <div class="bg-surface-0 border-l-2 border-teal-400 p-3.5 rounded-r-xl border border-edge space-y-1.5">
+              <div class="label text-teal-400">Chain-of-Thought Trace</div>
+              <p class="text-zinc-300 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${escapeHtml(
                 ce.chain_of_thought_trace
               )}</p>
             </div>
 
             ${
               quotesHtml
-                ? `<div class="space-y-2"><div class="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">Verbatim Student Evidence Quotes</div>${quotesHtml}</div>`
+                ? `<div class="space-y-1.5"><div class="label">Verbatim Evidence</div>${quotesHtml}</div>`
                 : ""
             }
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 text-sm">
-              <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-xl p-4">
-                <div class="text-xs font-mono font-bold uppercase text-emerald-900 mb-2">Strengths Observed</div>
-                <ul class="text-emerald-950 space-y-1">${strengthsHtml || "<li>None noted</li>"}</ul>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12px]">
+              <div class="bg-success-dim border border-success-border rounded-xl p-3.5">
+                <div class="label text-emerald-300 mb-1">Strengths Observed</div>
+                <ul class="text-zinc-300 space-y-1">${strengthsHtml || "<li>None noted</li>"}</ul>
               </div>
-              <div class="bg-rose-50/70 border-2 border-rose-200 rounded-xl p-4">
-                <div class="text-xs font-mono font-bold uppercase text-rose-900 mb-2">Flaws / Gaps Observed</div>
-                <ul class="text-rose-950 space-y-1">${flawsHtml || "<li>None noted</li>"}</ul>
+              <div class="bg-danger-dim border border-danger-border rounded-xl p-3.5">
+                <div class="label text-rose-300 mb-1">Flaws / Gaps Observed</div>
+                <ul class="text-zinc-300 space-y-1">${flawsHtml || "<li>None noted</li>"}</ul>
               </div>
             </div>
           </div>
@@ -624,32 +626,33 @@
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-6">
-        <div class="bg-slate-100 border-2 border-slate-200 rounded-2xl p-5 text-sm leading-relaxed">
-          <span class="font-mono uppercase text-xs font-bold text-blue-700 block mb-1">
-            Overall Submission Comprehension (${escapeHtml(initialEval.submission_modality)})
+      <div class="space-y-4 animate-enter">
+        <div class="card-inner rounded-xl p-4 text-[13px] leading-relaxed">
+          <span class="label text-teal-400 block mb-1">
+            Overall Comprehension Summary (${escapeHtml(initialEval.submission_modality)})
           </span>
-          <span class="text-slate-900 font-medium">${escapeHtml(
+          <span class="text-zinc-200">${escapeHtml(
             initialEval.overall_comprehension_summary
           )}</span>
         </div>
         ${cardsHtml}
       </div>
     `;
+    refreshIcons();
   }
 
   function renderReflectionTab(reflectionAudit) {
     const panel = el("tab-panel-reflection");
     if (!panel) return;
     if (!reflectionAudit) {
-      panel.innerHTML = `<p class="text-slate-500 text-center py-12 text-base">No reflection audit log available.</p>`;
+      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No reflection audit log available.</p>`;
       return;
     }
 
     const checksHtml = (reflectionAudit.bias_checks_performed || [])
       .map(
         (c) =>
-          `<li class="flex items-center gap-2.5 text-sm font-medium text-slate-800 bg-slate-50 px-4 py-3 rounded-xl border-2 border-slate-200"><span class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span><span>${escapeHtml(
+          `<li class="flex items-center gap-2 text-[12px] text-zinc-300 bg-surface-2 px-3 py-2 rounded-lg border border-edge"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span><span>${escapeHtml(
             c
           )}</span></li>`
       )
@@ -658,59 +661,57 @@
     const rowsHtml = (reflectionAudit.criterion_audits || [])
       .map(
         (ca) => `
-        <tr class="border-t-2 border-slate-200 hover:bg-slate-50 text-sm">
-          <td class="py-3.5 px-4 font-mono font-bold text-slate-900">${escapeHtml(
-            ca.criterion_id
-          )}</td>
-          <td class="py-3.5 px-4 font-mono tabular-nums">${Number(ca.initial_score).toFixed(1)}</td>
-          <td class="py-3.5 px-4 font-mono font-bold text-blue-700 tabular-nums">${Number(
+        <tr class="border-t border-edge hover:bg-white/[0.02] text-[12px]">
+          <td class="py-3 px-3 font-mono font-bold text-white">${escapeHtml(ca.criterion_id)}</td>
+          <td class="py-3 px-3 font-mono text-zinc-300 tabular-nums">${Number(
+            ca.initial_score
+          ).toFixed(1)}</td>
+          <td class="py-3 px-3 font-mono font-bold text-violet-300 tabular-nums">${Number(
             ca.calibrated_score
           ).toFixed(1)}</td>
-          <td class="py-3.5 px-4 font-mono font-bold tabular-nums">${escapeHtml(
+          <td class="py-3 px-3 font-mono font-semibold text-amber-300 tabular-nums">${escapeHtml(
             formatDelta(ca.adjustment_delta)
           )}</td>
-          <td class="py-3.5 px-4"><span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-200 text-slate-800">${escapeHtml(
+          <td class="py-3 px-3"><span class="font-mono text-[10px] px-2 py-0.5 rounded bg-surface-0 border border-edge text-zinc-400">${escapeHtml(
             ca.audit_verdict
           )}</span></td>
-          <td class="py-3.5 px-4 text-slate-700">${escapeHtml(ca.bias_or_error_detected)}</td>
-          <td class="py-3.5 px-4 text-slate-700">${escapeHtml(ca.calibration_reasoning)}</td>
+          <td class="py-3 px-3 text-zinc-300">${escapeHtml(ca.bias_or_error_detected)}</td>
+          <td class="py-3 px-3 text-zinc-400">${escapeHtml(ca.calibration_reasoning)}</td>
         </tr>
       `
       )
       .join("");
 
     panel.innerHTML = `
-      <div class="space-y-6">
-        <div class="bg-slate-100 border-2 border-slate-200 rounded-2xl p-6 space-y-2">
+      <div class="space-y-5 animate-enter">
+        <div class="card-inner rounded-xl p-5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-display text-xl font-bold text-slate-900">Meta-Evaluator Audit Verdict</span>
-            <span class="font-mono text-xs font-bold px-3.5 py-1.5 rounded-lg bg-blue-600 text-white uppercase">${escapeHtml(
+            <span class="text-[15px] font-semibold text-white">Meta-Evaluator Audit Verdict</span>
+            <span class="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-warn-dim text-amber-300 border border-warn-border uppercase">${escapeHtml(
               reflectionAudit.audit_status
             )}</span>
           </div>
-          <p class="text-sm text-slate-700 leading-relaxed">${escapeHtml(
+          <p class="text-[13px] text-zinc-300 leading-relaxed">${escapeHtml(
             reflectionAudit.overall_audit_summary
           )}</p>
         </div>
 
-        <div class="space-y-3">
-          <h4 class="font-display text-lg font-bold text-slate-900">
-            Bias &amp; Calibration Checks Performed
-          </h4>
-          <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">${checksHtml}</ul>
+        <div class="space-y-2.5">
+          <h4 class="label">Bias &amp; Calibration Checks Executed</h4>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checksHtml}</ul>
         </div>
 
-        <div class="overflow-x-auto border-2 border-slate-200 rounded-2xl bg-white">
+        <div class="overflow-x-auto border border-edge rounded-xl bg-surface-0">
           <table class="w-full text-left border-collapse">
-            <thead class="bg-[#0B0F19] text-white font-mono text-xs uppercase">
+            <thead class="bg-surface-2 text-zinc-400 font-mono text-[10px] uppercase tracking-wider">
               <tr>
-                <th class="py-3.5 px-4">ID</th>
-                <th class="py-3.5 px-4">Initial</th>
-                <th class="py-3.5 px-4">Calibrated</th>
-                <th class="py-3.5 px-4">Delta</th>
-                <th class="py-3.5 px-4">Verdict</th>
-                <th class="py-3.5 px-4">Bias / Error Detected</th>
-                <th class="py-3.5 px-4">Calibration Reasoning</th>
+                <th class="py-2.5 px-3">ID</th>
+                <th class="py-2.5 px-3">Initial</th>
+                <th class="py-2.5 px-3">Calibrated</th>
+                <th class="py-2.5 px-3">Delta</th>
+                <th class="py-2.5 px-3">Verdict</th>
+                <th class="py-2.5 px-3">Bias / Error Check</th>
+                <th class="py-2.5 px-3">Calibration Reasoning</th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -718,6 +719,7 @@
         </div>
       </div>
     `;
+    refreshIcons();
   }
 
   function updateExportLinks(evaluationId) {
@@ -746,7 +748,8 @@
     const initScore = Number(record.total_initial_score || 0);
     const finalScore = Number(record.total_final_score || 0);
     const delta = finalScore - initScore;
-    const pct = maxScore > 0 ? `${((finalScore / maxScore) * 100).toFixed(1)}%` : "N/A";
+    const pctNum = maxScore > 0 ? (finalScore / maxScore) * 100 : 0;
+    const pct = maxScore > 0 ? `${pctNum.toFixed(1)}%` : "N/A";
 
     el("report-student-header").textContent = `${record.student_name} ${
       record.student_id ? `(${record.student_id})` : ""
@@ -761,6 +764,7 @@
     el("hero-percentage").textContent = pct;
     el("hero-letter-grade").textContent = record.letter_grade || "N/A";
 
+    updateScoreRing(pctNum);
     renderFeedbackTab(record.feedback_report);
     renderCriteriaTab(record.initial_evaluation, record.reflection_audit);
     renderReflectionTab(record.reflection_audit);
@@ -823,6 +827,7 @@
     const data = await res.json();
     state.assignments = data.assignments || [];
     state.sampleSubmissions = data.sample_submissions || {};
+    state.userEditedSubmission = false;
     if (state.assignments.length > 0) {
       selectAssignment(state.assignments[0].id);
     }
@@ -839,11 +844,12 @@
       Object.values(state.sampleSubmissions)[0];
     if (!sample) {
       showBanner(
-        "No sample submission tied to this custom assignment. Select a default benchmark assignment first.",
+        "No sample submission tied to this custom assignment. Select a default benchmark first.",
         true
       );
       return;
     }
+    state.userEditedSubmission = false;
     el("student-name-input").value = sample.student_name || "Sample Student";
     el("student-id-input").value = sample.student_id || "STU-1001";
     el("submission-filename-input").value =
@@ -852,13 +858,11 @@
     state.submissionPdfBase64 = null;
     const badge = el("ingested-file-badge");
     if (badge) {
-      badge.textContent = `Loaded Sample: ${sample.submission_filename}`;
+      badge.textContent = `Sample: ${sample.submission_filename}`;
       badge.classList.remove("hidden");
     }
-    switchStep(2);
-    showBanner(
-      `Loaded sample submission for ${sample.student_name}. Click "Run 4-Agent Evaluation" below to start grading!`
-    );
+    switchLeftPane("editor");
+    showBanner(`Loaded sample work for ${sample.student_name}. Click "Run 4-Agent Evaluation" to grade.`);
   }
 
   async function deleteAssignment(assignmentId) {
@@ -895,7 +899,7 @@
     );
     if (record.status === "completed") {
       for (const stage of STAGES) {
-        updateStageState(stage, "complete", "done");
+        updateStageState(stage, "complete", "verified");
       }
     }
     renderFullEvaluationRecord(record);
@@ -927,20 +931,14 @@
 
     const submissionText = el("submission-text-input").value.trim();
     if (!submissionText) {
-      showBanner(
-        "Submission text cannot be empty. Click 'Auto-Fill Sample Submission' or upload a file first.",
-        true
-      );
+      showBanner("Submission text cannot be empty.", true);
       return;
     }
 
     const runBtn = el("run-eval-btn");
     runBtn.disabled = true;
 
-    // Automatically transition user to Step 3 (Live Pipeline & Report)
-    switchStep(3);
-
-    resetPipelineStepper("Running 4-Agent Pipeline...");
+    resetPipelineStepper("Streaming 4-Agent Pipeline...");
     state.livePartial = { rubric: null, initialEval: null, reflection: null, feedback: null };
 
     const payload = {
@@ -999,9 +997,9 @@
       showBanner(`Evaluation failed: ${err.message || err}`, true);
       const overall = el("pipeline-overall-status");
       if (overall) {
-        overall.textContent = "Failed";
+        overall.textContent = "Pipeline Error";
         overall.className =
-          "text-sm font-mono font-bold px-4 py-2 rounded-xl bg-rose-100 text-rose-900 border-2 border-rose-300";
+          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-red-500/20 text-rose-300 border border-red-500/40";
       }
     } finally {
       runBtn.disabled = false;
@@ -1013,9 +1011,9 @@
       updateStageState(data.agent, "running");
       const overall = el("pipeline-overall-status");
       if (overall) {
-        overall.textContent = `Running: ${data.label || data.agent}`;
+        overall.textContent = `Active: ${data.label || data.agent}`;
         overall.className =
-          "text-sm font-mono font-bold px-4 py-2 rounded-xl bg-blue-100 text-blue-900 border-2 border-blue-300";
+          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-300 border border-violet-500/40";
       }
       return;
     }
@@ -1051,7 +1049,7 @@
       if (overall) {
         overall.textContent = `Completed in ${data.duration_ms} ms`;
         overall.className =
-          "text-sm font-mono font-bold px-4 py-2 rounded-xl bg-emerald-100 text-emerald-900 border-2 border-emerald-300 tabular-nums";
+          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tabular-nums";
       }
       renderFullEvaluationRecord(data);
       return;
@@ -1063,7 +1061,7 @@
       if (overall) {
         overall.textContent = "Error";
         overall.className =
-          "text-sm font-mono font-bold px-4 py-2 rounded-xl bg-rose-100 text-rose-900 border-2 border-rose-300";
+          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-red-500/20 text-rose-300 border border-red-500/40";
       }
     }
   }
@@ -1083,8 +1081,8 @@
         buttons.forEach((b) => {
           const active = b.getAttribute("data-tab") === target;
           b.className = active
-            ? "report-tab-btn px-5 py-3 text-sm font-display font-bold rounded-t-xl border-t-2 border-x-2 border-slate-300 bg-white text-blue-700 -mb-[2px]"
-            : "report-tab-btn px-5 py-3 text-sm font-display font-semibold rounded-t-xl border-t-2 border-x-2 border-transparent text-slate-600 hover:text-slate-900";
+            ? "report-tab-btn px-3.5 py-1.5 text-[12px] font-semibold rounded-lg tab-active border transition-all"
+            : "report-tab-btn px-3.5 py-1.5 text-[12px] font-medium rounded-lg text-zinc-500 hover:text-zinc-300 border border-transparent hover:bg-surface-3 transition-all";
         });
         Object.entries(panels).forEach(([key, panel]) => {
           if (!panel) return;
@@ -1094,27 +1092,37 @@
             panel.classList.add("hidden");
           }
         });
+        refreshIcons();
       });
     });
   }
 
   function setupEventListeners() {
-    // Step navigation buttons
-    document.querySelectorAll(".step-nav-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const step = Number(btn.getAttribute("data-step-target"));
-        if (step) switchStep(step);
-      });
-    });
-    el("go-to-step-2-btn")?.addEventListener("click", () => switchStep(2));
-    el("back-to-step-1-btn")?.addEventListener("click", () => switchStep(1));
+    el("left-tab-editor-btn")?.addEventListener("click", () => switchLeftPane("editor"));
+    el("left-tab-spec-btn")?.addEventListener("click", () => switchLeftPane("spec"));
 
     el("status-banner-close")?.addEventListener("click", hideBanner);
     el("seed-btn")?.addEventListener("click", seedAssignments);
     el("load-sample-btn")?.addEventListener("click", loadSampleSubmissionForActiveAssignment);
-    el("quick-demo-btn")?.addEventListener("click", loadSampleSubmissionForActiveAssignment);
     el("refresh-history-btn")?.addEventListener("click", fetchEvaluations);
     el("evaluate-form")?.addEventListener("submit", handleRunEvaluation);
+
+    // API Key Popover
+    const keyPopover = el("key-popover-panel");
+    el("toggle-key-popover-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      keyPopover?.classList.toggle("hidden");
+    });
+    document.addEventListener("click", (e) => {
+      if (
+        keyPopover &&
+        !keyPopover.classList.contains("hidden") &&
+        !keyPopover.contains(e.target) &&
+        !el("toggle-key-popover-btn")?.contains(e.target)
+      ) {
+        keyPopover.classList.add("hidden");
+      }
+    });
 
     // History drawer
     const historyDrawer = el("history-drawer-modal");
@@ -1124,8 +1132,9 @@
     el("close-history-drawer-btn")?.addEventListener("click", closeHistory);
     el("history-drawer-backdrop")?.addEventListener("click", closeHistory);
 
-    // Clear cached PDF bytes if user manually edits submission text
+    // Track user edits & clear cached PDF bytes
     el("submission-text-input")?.addEventListener("input", () => {
+      state.userEditedSubmission = true;
       state.submissionPdfBase64 = null;
     });
 
@@ -1135,14 +1144,14 @@
     dropzone?.addEventListener("click", () => fileInput?.click());
     dropzone?.addEventListener("dragover", (e) => {
       e.preventDefault();
-      dropzone.classList.add("border-blue-600", "bg-blue-50");
+      dropzone.classList.add("border-violet-500/40", "bg-accent-dim");
     });
     dropzone?.addEventListener("dragleave", () => {
-      dropzone.classList.remove("border-blue-600", "bg-blue-50");
+      dropzone.classList.remove("border-violet-500/40", "bg-accent-dim");
     });
     dropzone?.addEventListener("drop", (e) => {
       e.preventDefault();
-      dropzone.classList.remove("border-blue-600", "bg-blue-50");
+      dropzone.classList.remove("border-violet-500/40", "bg-accent-dim");
       const file = e.dataTransfer?.files?.[0];
       if (file) handleStudentFileUpload(file);
     });
@@ -1176,7 +1185,7 @@
         showBanner("Structured rubric parsed and saved.");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Parse / Refresh Rubric";
+        btn.textContent = "Parse / Refresh";
       }
     });
 
@@ -1242,6 +1251,7 @@
 
   function handleStudentFileUpload(file) {
     ingestFileToTarget(file, (doc) => {
+      state.userEditedSubmission = true;
       el("submission-filename-input").value = doc.filename;
       el("submission-text-input").value = doc.extracted_text;
       state.submissionPdfBase64 = doc.has_raw_pdf ? doc.pdf_base64 || null : null;
@@ -1262,5 +1272,9 @@
     await fetchHealth();
     await fetchAssignmentsAndSeedIfNeeded();
     await fetchEvaluations();
+    if (state.evaluations.length > 0 && state.evaluations[0].status === "completed") {
+      await loadEvaluationById(state.evaluations[0].id);
+    }
+    refreshIcons();
   });
 })();

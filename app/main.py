@@ -48,9 +48,20 @@ def create_app(
     def _build_client(
         header_api_key: str | None = None,
         header_model: str | None = None,
+        alt_header_api_key: str | None = None,
     ) -> tuple[GeminiStructuredClient, str]:
-        api_key = (header_api_key or "").strip() or settings.gemini_api_key
-        model = (header_model or "").strip() or settings.gemini_model
+        live_settings = get_settings()
+        api_key = (
+            (header_api_key or "").strip()
+            or (alt_header_api_key or "").strip()
+            or live_settings.gemini_api_key
+            or settings.gemini_api_key
+        )
+        model = (
+            (header_model or "").strip()
+            or live_settings.gemini_model
+            or settings.gemini_model
+        )
         if client_factory is not None:
             return client_factory(api_key, model), api_key
         return GeminiStructuredClient(api_key=api_key, model=model), api_key
@@ -89,10 +100,13 @@ def create_app(
 
     @fastapi_app.get("/api/health")
     async def health_check() -> dict[str, Any]:
+        live_settings = get_settings()
         return {
             "status": "ok",
-            "default_model": settings.gemini_model,
-            "has_env_api_key": bool(settings.gemini_api_key),
+            "default_model": live_settings.gemini_model or settings.gemini_model,
+            "has_env_api_key": bool(
+                live_settings.gemini_api_key or settings.gemini_api_key
+            ),
         }
 
     @fastapi_app.post("/api/ingest-file")
@@ -130,11 +144,14 @@ def create_app(
     async def create_assignment(
         payload: AssignmentCreate,
         x_gemini_api_key: str | None = Header(default=None),
+        x_gemini_key: str | None = Header(default=None),
         x_gemini_model: str | None = Header(default=None),
     ) -> dict[str, Any]:
         structured_rubric = None
         if payload.parse_rubric_now:
-            client, effective_key = _build_client(x_gemini_api_key, x_gemini_model)
+            client, effective_key = _build_client(
+                x_gemini_api_key, x_gemini_model, x_gemini_key
+            )
             if effective_key or client_factory is not None:
                 try:
                     structured_rubric = await parse_or_generate_rubric(
@@ -162,12 +179,13 @@ def create_app(
     async def parse_assignment_rubric(
         assignment_id: str,
         x_gemini_api_key: str | None = Header(default=None),
+        x_gemini_key: str | None = Header(default=None),
         x_gemini_model: str | None = Header(default=None),
     ) -> dict[str, Any]:
         assignment = db.get_assignment(assignment_id)
         if assignment is None:
             raise HTTPException(status_code=404, detail="Assignment not found")
-        client, _ = _build_client(x_gemini_api_key, x_gemini_model)
+        client, _ = _build_client(x_gemini_api_key, x_gemini_model, x_gemini_key)
         try:
             rubric = await parse_or_generate_rubric(
                 client,
@@ -209,10 +227,11 @@ def create_app(
     async def evaluate_stream(
         payload: EvaluateRequest,
         x_gemini_api_key: str | None = Header(default=None),
+        x_gemini_key: str | None = Header(default=None),
         x_gemini_model: str | None = Header(default=None),
     ) -> StreamingResponse:
         pdf_bytes = _resolve_pdf_bytes(payload)
-        client, _ = _build_client(x_gemini_api_key, x_gemini_model)
+        client, _ = _build_client(x_gemini_api_key, x_gemini_model, x_gemini_key)
 
         async def _sse_generator() -> AsyncIterator[str]:
             async for evt in run_evaluation_pipeline(
@@ -234,10 +253,11 @@ def create_app(
     async def evaluate_sync(
         payload: EvaluateRequest,
         x_gemini_api_key: str | None = Header(default=None),
+        x_gemini_key: str | None = Header(default=None),
         x_gemini_model: str | None = Header(default=None),
     ) -> dict[str, Any]:
         pdf_bytes = _resolve_pdf_bytes(payload)
-        client, _ = _build_client(x_gemini_api_key, x_gemini_model)
+        client, _ = _build_client(x_gemini_api_key, x_gemini_model, x_gemini_key)
 
         completed_data: dict[str, Any] | None = None
         error_data: dict[str, Any] | None = None
