@@ -52,10 +52,10 @@
     wrapper.classList.remove("hidden");
     if (isError) {
       inner.className =
-        "rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold flex items-center justify-between border bg-rose-50 border-rose-300 text-rose-900 shadow-sm animate-enter";
+        "rounded-xl px-4 py-3 text-xs sm:text-sm font-bold flex items-center justify-between border bg-rose-100 border-rose-300 text-rose-950 shadow-sm animate-enter";
     } else {
       inner.className =
-        "rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold flex items-center justify-between border bg-orange-50 border-orange-300 text-orange-950 shadow-sm animate-enter";
+        "rounded-xl px-4 py-3 text-xs sm:text-sm font-bold flex items-center justify-between border bg-orange-100 border-orange-300 text-orange-950 shadow-sm animate-enter";
     }
   }
 
@@ -111,17 +111,25 @@
       setupView.classList.add("hidden");
       reportView.classList.remove("hidden");
       reportBtn.className =
-        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-800 shadow-sm transition-all border border-[#EAE3D9]";
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-600 text-white shadow-sm transition-all";
       setupBtn.className =
-        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold text-warmstone-600 hover:text-warmstone-900 transition-all border border-transparent";
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-warmstone-700 hover:text-warmstone-900 hover:bg-white/80 transition-all border border-transparent";
+      const repBadge = reportBtn.querySelector("span:first-child");
+      if (repBadge) repBadge.className = "w-5 h-5 rounded-full bg-white text-orange-700 text-[11px] font-mono font-extrabold flex items-center justify-center";
+      const setBadge = setupBtn.querySelector("span:first-child");
+      if (setBadge) setBadge.className = "w-5 h-5 rounded-full bg-stone-200 text-stone-800 text-[11px] font-mono font-extrabold flex items-center justify-center";
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       reportView.classList.add("hidden");
       setupView.classList.remove("hidden");
       setupBtn.className =
-        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-800 shadow-sm transition-all border border-[#EAE3D9]";
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-600 text-white shadow-sm transition-all";
       reportBtn.className =
-        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold text-warmstone-600 hover:text-warmstone-900 transition-all border border-transparent";
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-warmstone-700 hover:text-warmstone-900 hover:bg-white/80 transition-all border border-transparent";
+      const setBadge = setupBtn.querySelector("span:first-child");
+      if (setBadge) setBadge.className = "w-5 h-5 rounded-full bg-white text-orange-700 text-[11px] font-mono font-extrabold flex items-center justify-center";
+      const repBadge = reportBtn.querySelector("span:first-child");
+      if (repBadge) repBadge.className = "w-5 h-5 rounded-full bg-stone-200 text-stone-800 text-[11px] font-mono font-extrabold flex items-center justify-center";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     refreshIcons();
@@ -132,16 +140,16 @@
     if (overall) {
       overall.textContent = statusLabel;
       overall.className =
-        "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-white text-warmstone-700 border border-[#EAE3D9] tabular-nums shadow-sm";
+        "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-cream-50 text-warmstone-900 border border-[#DDD4C7] tabular-nums shadow-sm";
     }
     for (const stage of STAGES) {
       const card = el(`stage-${stage}`);
       if (!card) continue;
-      card.className = "stage-card card-inner rounded-xl p-3.5 relative overflow-hidden";
+      card.className = "stage-card card-inner rounded-xl p-3.5 relative overflow-hidden bg-cream-50 border border-[#E5DDD3]";
       const ind = card.querySelector(".stage-indicator");
       if (ind) {
-        ind.innerHTML = `<span class="text-warmstone-400">standby</span>`;
-        ind.className = "stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold";
+        ind.innerHTML = `<span class="px-2 py-0.5 rounded bg-stone-200 text-stone-800 font-mono text-[11px] font-bold">STANDBY</span>`;
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums font-bold";
       }
     }
   }
@@ -153,37 +161,37 @@
 
     if (mode === "running") {
       card.className =
-        "stage-card card-inner node-running rounded-xl p-3.5 relative overflow-hidden";
+        "stage-card card-inner node-running rounded-xl p-3.5 relative overflow-hidden border-2 border-orange-500 shadow-md";
       if (ind) {
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1.5 text-orange-700 font-bold">
-            <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+          <span class="inline-flex items-center gap-1.5 text-orange-950 font-bold bg-orange-100 border border-orange-300 px-2 py-0.5 rounded">
+            <span class="w-2 h-2 rounded-full bg-orange-600 animate-ping"></span>
             <span>active...</span>
           </span>
         `;
-        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums font-bold";
       }
     } else if (mode === "complete") {
       card.className =
-        "stage-card card-inner node-complete rounded-xl p-3.5 relative overflow-hidden";
+        "stage-card card-inner node-complete rounded-xl p-3.5 relative overflow-hidden border-2 border-emerald-400";
       if (ind) {
         const label = escapeHtml(extraText || "done");
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1 text-emerald-800 font-bold">
-            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
+          <span class="inline-flex items-center gap-1 text-emerald-950 font-bold bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded">
+            <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
               <path class="svg-check-anim" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <span>${label}</span>
           </span>
         `;
-        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums font-bold";
       }
     } else if (mode === "error") {
       card.className =
-        "stage-card card-inner node-error rounded-xl p-3.5 relative overflow-hidden";
+        "stage-card card-inner node-error rounded-xl p-3.5 relative overflow-hidden border-2 border-rose-400";
       if (ind) {
-        ind.textContent = "failed";
-        ind.className = "stage-indicator text-[11px] font-mono text-rose-600 font-bold";
+        ind.innerHTML = `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-950 border border-rose-300 font-mono text-[11px] font-bold">FAILED</span>`;
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums font-bold";
       }
     }
   }
@@ -193,7 +201,7 @@
     if (!container) return;
 
     if (!rubric || !Array.isArray(rubric.criteria) || rubric.criteria.length === 0) {
-      container.innerHTML = `<div class="p-4 rounded-xl bg-cream-50 border border-[#EAE3D9] text-xs text-warmstone-600">No structured rubric cached yet. Click <strong>Parse / Refresh Rubric</strong> above or run an evaluation to parse automatically.</div>`;
+      container.innerHTML = `<div class="p-4 rounded-xl bg-cream-50 border border-[#E5DDD3] text-xs text-warmstone-800 font-medium">No structured rubric cached yet. Click <strong>Parse / Refresh Rubric</strong> above or run an evaluation to parse automatically.</div>`;
       return;
     }
 
@@ -202,22 +210,22 @@
         const bandsHtml = (c.scoring_bands || [])
           .map(
             (b) =>
-              `<span class="inline-block bg-cream-100 border border-[#EAE3D9] rounded-md px-2 py-0.5 text-[10px] font-mono text-warmstone-700 font-medium">${escapeHtml(
+              `<span class="inline-block bg-cream-100 border border-[#DDD4C7] rounded-md px-2 py-0.5 text-[11px] font-mono text-warmstone-900 font-bold">${escapeHtml(
                 b.band_label
-              )}: <strong class="text-orange-700">${escapeHtml(b.points_range)} pts</strong></span>`
+              )}: <strong class="text-orange-800">${escapeHtml(b.points_range)} pts</strong></span>`
           )
           .join(" ");
         return `
-        <div class="rounded-xl p-4 bg-white border border-[#EAE3D9] shadow-sm space-y-2">
+        <div class="rounded-xl p-4 bg-white border border-[#DDD4C7] shadow-sm space-y-2">
           <div class="flex items-center justify-between gap-2">
-            <span class="font-bold text-sm text-warmstone-900">${escapeHtml(
+            <span class="font-extrabold text-sm text-warmstone-900">${escapeHtml(
               c.criterion_id
             )} · ${escapeHtml(c.title)}</span>
-            <span class="font-mono font-bold text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200 tabular-nums">${Number(
+            <span class="font-mono font-bold text-xs px-2.5 py-0.5 rounded bg-orange-100 text-orange-950 border border-orange-300 tabular-nums">${Number(
               c.max_points
             ).toFixed(1)} pts</span>
           </div>
-          <p class="text-warmstone-600 text-xs leading-relaxed">${escapeHtml(c.description)}</p>
+          <p class="text-warmstone-700 text-xs leading-relaxed font-medium">${escapeHtml(c.description)}</p>
           <div class="flex flex-wrap gap-1.5 pt-1">${bandsHtml}</div>
         </div>
       `;
@@ -225,16 +233,17 @@
       .join("");
 
     container.innerHTML = `
-      <div class="flex items-center justify-between bg-orange-50 border border-orange-200 px-3.5 py-2.5 rounded-xl mb-2.5 text-xs">
-        <span class="font-bold text-orange-900">${escapeHtml(
+      <div class="flex items-center justify-between bg-orange-100 border border-orange-300 px-4 py-2.5 rounded-xl mb-2.5 text-xs">
+        <span class="font-extrabold text-orange-950">${escapeHtml(
           rubric.assignment_title || "Parsed Rubric"
         )}</span>
-        <span class="font-mono font-bold text-emerald-800 tabular-nums">Total: ${Number(
+        <span class="font-mono font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded tabular-nums">Total: ${Number(
           rubric.total_points || 0
         ).toFixed(1)} pts</span>
       </div>
       <div class="space-y-2.5">${criteriaHtml}</div>
     `;
+    refreshIcons();
   }
 
   function renderAssignmentsList() {
@@ -242,41 +251,41 @@
     if (!container) return;
 
     if (state.assignments.length === 0) {
-      container.innerHTML = `<span class="text-xs text-warmstone-500">No benchmarks found. Click "Reset Demos".</span>`;
+      container.innerHTML = `<span class="text-xs text-warmstone-700 font-semibold">No benchmarks found. Click "Reset Demos".</span>`;
       return;
     }
 
     container.innerHTML = state.assignments
       .map((a) => {
         const isSelected = a.id === state.activeAssignmentId;
-        const typeDot =
+        const typeColor =
           a.assignment_type === "code"
-            ? "bg-orange-500"
+            ? "bg-orange-600 text-white"
             : a.assignment_type === "theory"
-            ? "bg-amber-500"
-            : "bg-emerald-500";
+            ? "bg-amber-600 text-white"
+            : "bg-emerald-600 text-white";
 
         return `
         <div
           data-assignment-id="${escapeHtml(a.id)}"
-          class="assign-card-item btn inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl cursor-pointer text-xs border transition-all ${
+          class="assign-card-item btn inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl cursor-pointer text-xs border transition-all ${
             isSelected
-              ? "bg-orange-100 border-orange-400 text-orange-950 font-bold shadow-sm"
-              : "bg-white border-[#EAE3D9] text-warmstone-700 hover:border-orange-300 hover:text-warmstone-900 shadow-sm"
+              ? "bg-orange-100 border-2 border-orange-500 text-orange-950 font-extrabold shadow-md"
+              : "bg-white border-2 border-[#DDD4C7] text-warmstone-800 hover:border-orange-400 hover:text-warmstone-950 shadow-sm font-bold"
           }"
         >
-          <span class="w-2 h-2 rounded-full ${typeDot}"></span>
-          <span class="font-semibold truncate max-w-[200px] sm:max-w-[260px]">${escapeHtml(
+          <span class="w-2.5 h-2.5 rounded-full ${isSelected ? "bg-orange-600 ring-2 ring-orange-300" : "bg-stone-400"}"></span>
+          <span class="truncate max-w-[200px] sm:max-w-[260px]">${escapeHtml(
             a.title
           )}</span>
-          <span class="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-black/5 text-warmstone-500">${escapeHtml(
+          <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${typeColor}">${escapeHtml(
             a.assignment_type
           )}</span>
           <button
             type="button"
             data-delete-assignment="${escapeHtml(a.id)}"
             title="Delete benchmark"
-            class="text-warmstone-400 hover:text-rose-600 ml-1 font-bold leading-none"
+            class="text-warmstone-500 hover:text-rose-700 hover:bg-rose-100 rounded-md px-1.5 py-0.5 ml-1 font-extrabold leading-none transition-colors"
           >
             &times;
           </button>
@@ -360,7 +369,7 @@
     if (!container) return;
 
     if (state.evaluations.length === 0) {
-      container.innerHTML = `<div class="text-xs text-warmstone-400 py-10 text-center">No evaluations recorded yet.</div>`;
+      container.innerHTML = `<div class="text-xs text-warmstone-700 font-semibold py-10 text-center">No evaluations recorded yet.</div>`;
       return;
     }
 
@@ -369,27 +378,27 @@
         const isSelected = state.activeEvaluation && state.activeEvaluation.id === ev.id;
         const statusColor =
           ev.status === "completed"
-            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+            ? "bg-emerald-100 text-emerald-950 border-emerald-300"
             : ev.status === "failed"
-            ? "bg-rose-50 text-rose-800 border-rose-200"
-            : "bg-amber-50 text-amber-800 border-amber-200";
+            ? "bg-rose-100 text-rose-950 border-rose-300"
+            : "bg-amber-100 text-amber-950 border-amber-300";
         return `
         <div
           data-eval-id="${escapeHtml(ev.id)}"
           class="eval-history-row btn rounded-xl p-3.5 cursor-pointer transition-all flex items-center justify-between gap-3 border ${
             isSelected
-              ? "bg-orange-100 border-orange-300 shadow-sm"
-              : "bg-white border-[#EAE3D9] hover:bg-cream-100 shadow-sm"
+              ? "bg-orange-100 border-2 border-orange-500 shadow-md"
+              : "bg-white border border-[#DDD4C7] hover:bg-cream-100 shadow-sm"
           }"
         >
           <div class="min-w-0">
-            <div class="text-xs font-bold text-warmstone-900 truncate">
+            <div class="text-xs font-bold text-warmstone-950 truncate">
               ${escapeHtml(ev.student_name)}
-              <span class="text-warmstone-500 font-normal">${
+              <span class="text-warmstone-600 font-semibold">${
                 ev.student_id ? `(${escapeHtml(ev.student_id)})` : ""
               }</span>
             </div>
-            <div class="text-[11px] text-warmstone-500 truncate font-mono mt-0.5">${escapeHtml(
+            <div class="text-[11px] text-warmstone-600 truncate font-mono mt-0.5 font-medium">${escapeHtml(
               ev.submission_filename
             )}</div>
           </div>
@@ -423,16 +432,16 @@
     const panel = el("tab-panel-feedback");
     if (!panel) return;
     if (!feedback) {
-      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No pedagogical feedback available for this evaluation.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-700 text-center py-12 text-xs font-semibold">No pedagogical feedback available for this evaluation.</p>`;
       return;
     }
 
     const strengthsHtml = (feedback.key_strengths || [])
       .map(
         (s) => `
-        <li class="flex items-start gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
-          <span class="w-5 h-5 rounded-md bg-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">&check;</span>
-          <span class="text-emerald-950 text-xs sm:text-sm leading-relaxed">${escapeHtml(s)}</span>
+        <li class="flex items-start gap-3 p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-300">
+          <span class="w-5 h-5 rounded-md bg-emerald-600 text-white font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5">&check;</span>
+          <span class="text-emerald-950 text-xs sm:text-sm leading-relaxed font-semibold">${escapeHtml(s)}</span>
         </li>`
       )
       .join("");
@@ -440,35 +449,35 @@
     const gapsHtml = (feedback.learning_gaps || [])
       .map(
         (g, idx) => `
-        <div class="card-surface rounded-2xl overflow-hidden border border-[#EAE3D9] shadow-sm">
-          <div class="px-5 py-3 bg-cream-100/80 border-b border-[#EAE3D9] flex items-center gap-2.5">
-            <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200">
+        <div class="card-surface rounded-2xl overflow-hidden border border-[#DDD4C7] shadow-sm">
+          <div class="px-5 py-3 bg-orange-100 border-b border-orange-200 flex items-center gap-2.5">
+            <span class="font-mono text-[11px] font-extrabold px-2 py-0.5 rounded bg-orange-200 text-orange-950 border border-orange-300">
               GAP 0${idx + 1}
             </span>
-            <h5 class="text-base font-bold text-warmstone-900">${escapeHtml(
+            <h5 class="text-base font-extrabold text-warmstone-950">${escapeHtml(
               g.concept_or_skill
             )}</h5>
           </div>
           <div class="p-5 space-y-4 bg-white">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-              <div class="bg-rose-50 p-3.5 rounded-xl border border-rose-200">
-                <div class="font-mono text-[10px] uppercase tracking-wider font-bold text-rose-800 mb-1">
+              <div class="bg-rose-50 p-3.5 rounded-xl border-2 border-rose-300">
+                <div class="font-mono text-[11px] uppercase tracking-wider font-extrabold text-rose-950 mb-1">
                   Observed Flaw
                 </div>
-                <p class="text-rose-950 leading-relaxed font-medium">${escapeHtml(g.observed_issue)}</p>
+                <p class="text-rose-950 leading-relaxed font-semibold">${escapeHtml(g.observed_issue)}</p>
               </div>
-              <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
-                <div class="font-mono text-[10px] uppercase tracking-wider font-bold text-emerald-800 mb-1">
+              <div class="bg-emerald-50 p-3.5 rounded-xl border-2 border-emerald-300">
+                <div class="font-mono text-[11px] uppercase tracking-wider font-extrabold text-emerald-950 mb-1">
                   Actionable Fix
                 </div>
-                <p class="text-emerald-950 leading-relaxed font-medium">${escapeHtml(g.actionable_fix)}</p>
+                <p class="text-emerald-950 leading-relaxed font-semibold">${escapeHtml(g.actionable_fix)}</p>
               </div>
             </div>
             <div class="space-y-1.5">
-              <div class="font-mono text-[10px] uppercase tracking-wider text-warmstone-500 font-bold">
+              <div class="font-mono text-[11px] uppercase tracking-wider text-warmstone-700 font-extrabold">
                 Exemplar Pattern / Code Hint
               </div>
-              <pre class="bg-cream-100 text-warmstone-900 font-mono text-xs p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#EAE3D9]">${escapeHtml(
+              <pre class="bg-cream-100 text-warmstone-950 font-mono text-xs p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#DDD4C7] font-semibold">${escapeHtml(
                 g.example_or_hint
               )}</pre>
             </div>
@@ -481,11 +490,11 @@
     const roadmapHtml = (feedback.revision_roadmap || [])
       .map(
         (step, idx) =>
-          `<li class="flex items-start gap-3 p-3.5 rounded-xl bg-cream-50 border border-[#EAE3D9]">
+          `<li class="flex items-start gap-3 p-3.5 rounded-xl bg-cream-50 border border-[#DDD4C7]">
             <span class="font-mono font-bold text-xs w-6 h-6 rounded-md bg-orange-600 text-white flex items-center justify-center shrink-0">${
               idx + 1
             }</span>
-            <span class="text-xs sm:text-sm text-warmstone-800 leading-relaxed pt-0.5 font-medium">${escapeHtml(
+            <span class="text-xs sm:text-sm text-warmstone-900 leading-relaxed pt-0.5 font-semibold">${escapeHtml(
               step
             )}</span>
           </li>`
@@ -494,42 +503,42 @@
 
     panel.innerHTML = `
       <div class="space-y-6 animate-enter">
-        <div class="rounded-2xl p-5 bg-orange-50 border border-orange-200 space-y-1.5">
-          <div class="text-[11px] font-mono font-bold uppercase tracking-widest text-orange-800">
+        <div class="rounded-2xl p-5 bg-orange-50 border-2 border-orange-300 space-y-1.5">
+          <div class="text-[11px] font-mono font-extrabold uppercase tracking-widest text-orange-950">
             Executive Synthesis
           </div>
-          <p class="text-warmstone-900 text-sm leading-relaxed font-medium">${escapeHtml(
+          <p class="text-warmstone-950 text-sm leading-relaxed font-semibold">${escapeHtml(
             feedback.executive_summary
           )}</p>
         </div>
 
         <div class="space-y-2.5">
-          <h4 class="text-base font-bold text-warmstone-900">
+          <h4 class="text-base font-extrabold text-warmstone-900">
             Demonstrated Strengths
           </h4>
           <ul class="grid grid-cols-1 gap-2.5">${
-            strengthsHtml || "<li class='text-xs text-warmstone-500'>None noted.</li>"
+            strengthsHtml || "<li class='text-xs text-warmstone-700 font-medium'>None noted.</li>"
           }</ul>
         </div>
 
         <div class="space-y-3">
-          <h4 class="text-base font-bold text-warmstone-900">
+          <h4 class="text-base font-extrabold text-warmstone-900">
             Actionable Learning Gaps &amp; Coaching
           </h4>
           <div class="space-y-4">${
             gapsHtml ||
-            "<p class='text-xs text-warmstone-500'>No major learning gaps identified.</p>"
+            "<p class='text-xs text-warmstone-700 font-medium'>No major learning gaps identified.</p>"
           }</div>
         </div>
 
         <div class="space-y-2.5">
-          <h4 class="text-base font-bold text-warmstone-900">
+          <h4 class="text-base font-extrabold text-warmstone-900">
             Priority Revision Roadmap
           </h4>
           <ol class="space-y-2">${roadmapHtml}</ol>
         </div>
 
-        <blockquote class="border-l-4 border-orange-500 bg-orange-50 px-5 py-3.5 text-orange-950 text-sm italic rounded-r-xl font-medium">
+        <blockquote class="border-l-4 border-orange-600 bg-orange-100/70 px-5 py-3.5 text-orange-950 text-sm italic rounded-r-xl font-semibold">
           &ldquo;${escapeHtml(feedback.encouraging_closing)}&rdquo;
         </blockquote>
       </div>
@@ -541,7 +550,7 @@
     const panel = el("tab-panel-criteria");
     if (!panel) return;
     if (!initialEval || !Array.isArray(initialEval.criterion_evaluations)) {
-      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No criterion evaluations available.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-700 text-center py-12 text-xs font-semibold">No criterion evaluations available.</p>`;
       return;
     }
 
@@ -563,79 +572,79 @@
         const quotesHtml = (ce.student_evidence_quotes || [])
           .map(
             (q) =>
-              `<pre class="bg-cream-100 text-warmstone-900 font-mono text-xs p-3.5 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#EAE3D9]">${escapeHtml(
+              `<pre class="bg-cream-100 text-warmstone-950 font-mono text-xs p-3.5 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#DDD4C7] font-semibold">${escapeHtml(
                 q
               )}</pre>`
           )
           .join("");
 
         const strengthsHtml = (ce.strengths_observed || [])
-          .map((s) => `<li class="leading-relaxed">&bull; ${escapeHtml(s)}</li>`)
+          .map((s) => `<li class="leading-relaxed font-semibold">&bull; ${escapeHtml(s)}</li>`)
           .join("");
 
         const flawsHtml = (ce.flaws_or_gaps_observed || [])
-          .map((f) => `<li class="leading-relaxed">&bull; ${escapeHtml(f)}</li>`)
+          .map((f) => `<li class="leading-relaxed font-semibold">&bull; ${escapeHtml(f)}</li>`)
           .join("");
 
         return `
-        <div class="card-surface rounded-2xl overflow-hidden border border-[#EAE3D9] shadow-sm">
-          <div class="px-5 py-3.5 bg-cream-100/80 border-b border-[#EAE3D9] flex flex-wrap items-center justify-between gap-3">
+        <div class="card-surface rounded-2xl overflow-hidden border border-[#DDD4C7] shadow-sm">
+          <div class="px-5 py-3.5 bg-cream-100 border-b border-[#DDD4C7] flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
-              <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200">${escapeHtml(
+              <span class="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded bg-orange-100 text-orange-950 border border-orange-300">${escapeHtml(
                 ce.criterion_id
               )}</span>
-              <h5 class="text-base font-bold text-warmstone-900">${escapeHtml(
+              <h5 class="text-base font-extrabold text-warmstone-900">${escapeHtml(
                 ce.criterion_title
               )}</h5>
             </div>
-            <div class="flex items-center gap-2 font-mono text-xs tabular-nums">
-              <span class="px-2.5 py-1 rounded-lg bg-white border border-[#EAE3D9] text-warmstone-600 font-medium">Init: ${Number(
+            <div class="flex items-center gap-2 font-mono text-xs tabular-nums font-bold">
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-[#DDD4C7] text-warmstone-800">Init: ${Number(
                 ce.initial_score
               ).toFixed(1)}</span>
-              <span class="text-warmstone-400">&rarr;</span>
-              <span class="px-3 py-1 rounded-lg bg-orange-600 text-white font-bold">Final: ${Number(
+              <span class="text-warmstone-600">&rarr;</span>
+              <span class="px-3 py-1 rounded-lg bg-orange-600 text-white font-extrabold shadow-sm">Final: ${Number(
                 finalScore
               ).toFixed(1)} / ${Number(ce.max_points).toFixed(1)}</span>
-              <span class="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] uppercase font-bold">${escapeHtml(
+              <span class="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] uppercase font-extrabold">${escapeHtml(
                 verdict
               )}</span>
             </div>
           </div>
 
           <div class="p-5 space-y-4 bg-white">
-            <div class="w-full h-2 bg-cream-200 rounded-full overflow-hidden">
+            <div class="w-full h-2.5 bg-cream-200 rounded-full overflow-hidden border border-[#DDD4C7]">
               <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
                 1
               )}%"></div>
             </div>
 
-            <p class="text-warmstone-700 text-xs sm:text-sm leading-relaxed"><strong class="text-warmstone-900">Rationale:</strong> ${escapeHtml(
+            <p class="text-warmstone-800 text-xs sm:text-sm leading-relaxed"><strong class="text-warmstone-950 font-bold">Rationale:</strong> ${escapeHtml(
               ce.rationale
             )}</p>
 
-            <div class="bg-cream-50 border-l-4 border-orange-500 p-4 rounded-r-xl border border-[#EAE3D9] space-y-1.5">
-              <div class="text-[10px] font-mono font-bold uppercase tracking-widest text-orange-800">
+            <div class="bg-orange-50/70 border-l-4 border-orange-600 p-4 rounded-r-xl border border-orange-200 space-y-1.5">
+              <div class="text-[10px] font-mono font-extrabold uppercase tracking-widest text-orange-950">
                 Chain-of-Thought Verification Trace
               </div>
-              <p class="text-warmstone-800 font-mono text-xs whitespace-pre-wrap leading-relaxed">${escapeHtml(
+              <p class="text-warmstone-950 font-mono text-xs whitespace-pre-wrap leading-relaxed font-semibold">${escapeHtml(
                 ce.chain_of_thought_trace
               )}</p>
             </div>
 
             ${
               quotesHtml
-                ? `<div class="space-y-1.5"><div class="text-[10px] font-mono font-bold uppercase tracking-wider text-warmstone-500">Verbatim Student Evidence</div>${quotesHtml}</div>`
+                ? `<div class="space-y-1.5"><div class="text-[11px] font-mono font-extrabold uppercase tracking-wider text-warmstone-700">Verbatim Student Evidence</div>${quotesHtml}</div>`
                 : ""
             }
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
-                <div class="text-[10px] font-mono font-bold uppercase text-emerald-800 mb-1">Strengths Observed</div>
-                <ul class="text-emerald-950 space-y-1 font-medium">${strengthsHtml || "<li>None noted</li>"}</ul>
+              <div class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-3.5">
+                <div class="text-[10px] font-mono font-extrabold uppercase text-emerald-950 mb-1">Strengths Observed</div>
+                <ul class="text-emerald-950 space-y-1 font-semibold">${strengthsHtml || "<li>None noted</li>"}</ul>
               </div>
-              <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5">
-                <div class="text-[10px] font-mono font-bold uppercase text-rose-800 mb-1">Flaws / Gaps Observed</div>
-                <ul class="text-rose-950 space-y-1 font-medium">${flawsHtml || "<li>None noted</li>"}</ul>
+              <div class="bg-rose-50 border-2 border-rose-300 rounded-xl p-3.5">
+                <div class="text-[10px] font-mono font-extrabold uppercase text-rose-950 mb-1">Flaws / Gaps Observed</div>
+                <ul class="text-rose-950 space-y-1 font-semibold">${flawsHtml || "<li>None noted</li>"}</ul>
               </div>
             </div>
           </div>
@@ -646,11 +655,11 @@
 
     panel.innerHTML = `
       <div class="space-y-4 animate-enter">
-        <div class="card-surface rounded-2xl p-4 text-xs sm:text-sm leading-relaxed border border-[#EAE3D9] bg-cream-50">
-          <span class="font-mono uppercase text-[10px] tracking-widest text-orange-700 font-bold block mb-1">
+        <div class="card-surface rounded-2xl p-4 text-xs sm:text-sm leading-relaxed border border-[#E5DDD3] bg-cream-50">
+          <span class="font-mono uppercase text-[10px] tracking-widest text-orange-800 font-extrabold block mb-1">
             Overall Comprehension Summary (${escapeHtml(initialEval.submission_modality)})
           </span>
-          <span class="text-warmstone-800 font-medium">${escapeHtml(
+          <span class="text-warmstone-900 font-bold">${escapeHtml(
             initialEval.overall_comprehension_summary
           )}</span>
         </div>
@@ -664,14 +673,14 @@
     const panel = el("tab-panel-reflection");
     if (!panel) return;
     if (!reflectionAudit) {
-      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No reflection audit log available.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-700 text-center py-12 text-xs font-semibold">No reflection audit log available.</p>`;
       return;
     }
 
     const checksHtml = (reflectionAudit.bias_checks_performed || [])
       .map(
         (c) =>
-          `<li class="flex items-center gap-2 text-xs text-warmstone-800 bg-cream-50 px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] font-medium"><span class="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span><span>${escapeHtml(
+          `<li class="flex items-center gap-2 text-xs text-warmstone-900 bg-cream-50 px-3.5 py-2.5 rounded-xl border border-[#DDD4C7] font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-orange-600 shrink-0"></span><span>${escapeHtml(
             c
           )}</span></li>`
       )
@@ -680,22 +689,22 @@
     const rowsHtml = (reflectionAudit.criterion_audits || [])
       .map(
         (ca) => `
-        <tr class="border-t border-[#EAE3D9] hover:bg-cream-50 text-xs">
-          <td class="py-3 px-3 font-mono font-bold text-warmstone-900">${escapeHtml(ca.criterion_id)}</td>
-          <td class="py-3 px-3 font-mono text-warmstone-600 tabular-nums">${Number(
+        <tr class="border-t border-[#DDD4C7] hover:bg-orange-50/50 text-xs">
+          <td class="py-3.5 px-3 font-mono font-extrabold text-warmstone-950">${escapeHtml(ca.criterion_id)}</td>
+          <td class="py-3.5 px-3 font-mono text-warmstone-700 tabular-nums font-bold">${Number(
             ca.initial_score
           ).toFixed(1)}</td>
-          <td class="py-3 px-3 font-mono font-bold text-orange-700 tabular-nums">${Number(
+          <td class="py-3.5 px-3 font-mono font-extrabold text-orange-800 tabular-nums">${Number(
             ca.calibrated_score
           ).toFixed(1)}</td>
-          <td class="py-3 px-3 font-mono font-bold text-amber-700 tabular-nums">${escapeHtml(
+          <td class="py-3.5 px-3 font-mono font-extrabold text-amber-800 tabular-nums">${escapeHtml(
             formatDelta(ca.adjustment_delta)
           )}</td>
-          <td class="py-3 px-3"><span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-cream-100 border border-[#DDD4C7] text-warmstone-700">${escapeHtml(
+          <td class="py-3.5 px-3"><span class="font-mono text-[11px] font-extrabold px-2 py-0.5 rounded bg-cream-100 border border-[#DDD4C7] text-warmstone-900">${escapeHtml(
             ca.audit_verdict
           )}</span></td>
-          <td class="py-3 px-3 text-warmstone-800">${escapeHtml(ca.bias_or_error_detected)}</td>
-          <td class="py-3 px-3 text-warmstone-600">${escapeHtml(ca.calibration_reasoning)}</td>
+          <td class="py-3.5 px-3 text-warmstone-900 font-semibold">${escapeHtml(ca.bias_or_error_detected)}</td>
+          <td class="py-3.5 px-3 text-warmstone-800 font-medium">${escapeHtml(ca.calibration_reasoning)}</td>
         </tr>
       `
       )
@@ -703,28 +712,28 @@
 
     panel.innerHTML = `
       <div class="space-y-5 animate-enter">
-        <div class="card-surface rounded-2xl p-5 space-y-2 border border-[#EAE3D9] bg-white">
+        <div class="card-surface rounded-2xl p-5 space-y-2 border border-[#E5DDD3] bg-white">
           <div class="flex items-center justify-between">
-            <span class="text-base font-bold text-warmstone-900">Meta-Evaluator Audit Verdict</span>
-            <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-orange-100 text-orange-800 border border-orange-200 uppercase">${escapeHtml(
+            <span class="text-base font-extrabold text-warmstone-900">Meta-Evaluator Audit Verdict</span>
+            <span class="font-mono text-xs font-extrabold px-3 py-1 rounded-lg bg-orange-100 text-orange-950 border border-orange-300 uppercase">${escapeHtml(
               reflectionAudit.audit_status
             )}</span>
           </div>
-          <p class="text-xs sm:text-sm text-warmstone-700 leading-relaxed font-medium">${escapeHtml(
+          <p class="text-xs sm:text-sm text-warmstone-800 leading-relaxed font-semibold">${escapeHtml(
             reflectionAudit.overall_audit_summary
           )}</p>
         </div>
 
         <div class="space-y-2.5">
-          <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-warmstone-500">
+          <h4 class="text-[11px] font-mono font-extrabold uppercase tracking-widest text-warmstone-700">
             Bias &amp; Calibration Checks Executed
           </h4>
           <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checksHtml}</ul>
         </div>
 
-        <div class="overflow-x-auto border border-[#EAE3D9] rounded-2xl bg-white shadow-sm">
+        <div class="overflow-x-auto border border-[#DDD4C7] rounded-2xl bg-white shadow-sm">
           <table class="w-full text-left border-collapse">
-            <thead class="bg-cream-100 text-warmstone-700 font-mono text-[10px] uppercase tracking-wider font-bold">
+            <thead class="bg-cream-100 text-warmstone-900 font-mono text-[11px] uppercase tracking-wider font-extrabold border-b-2 border-[#DDD4C7]">
               <tr>
                 <th class="py-3 px-3">ID</th>
                 <th class="py-3 px-3">Initial</th>
@@ -904,7 +913,7 @@
     await fetchEvaluations();
   }
 
-  async function loadEvaluationById(evaluationId) {
+  async function loadEvaluationById(evaluationId, shouldSwitchFlow = true) {
     const res = await fetch(`/api/evaluations/${encodeURIComponent(evaluationId)}`);
     if (!res.ok) {
       showBanner("Could not load evaluation details.", true);
@@ -926,7 +935,9 @@
       }
     }
     renderFullEvaluationRecord(record);
-    switchFlow("report");
+    if (shouldSwitchFlow) {
+      switchFlow("report");
+    }
   }
 
   async function ingestFileToTarget(file, onLoaded) {
@@ -1025,7 +1036,7 @@
       if (overall) {
         overall.textContent = "Pipeline Error";
         overall.className =
-          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-950 border border-rose-300";
       }
     } finally {
       runBtn.disabled = false;
@@ -1039,7 +1050,7 @@
       if (overall) {
         overall.textContent = `Active: ${data.label || data.agent}`;
         overall.className =
-          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-orange-100 text-orange-800 border border-orange-300";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-orange-100 text-orange-950 border border-orange-300";
       }
       return;
     }
@@ -1075,7 +1086,7 @@
       if (overall) {
         overall.textContent = `Completed in ${data.duration_ms} ms`;
         overall.className =
-          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 tabular-nums";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-950 border border-emerald-300 tabular-nums";
       }
       renderFullEvaluationRecord(data);
       return;
@@ -1087,7 +1098,7 @@
       if (overall) {
         overall.textContent = "Error";
         overall.className =
-          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-950 border border-rose-300";
       }
     }
   }
@@ -1108,7 +1119,7 @@
           const active = b.getAttribute("data-tab") === target;
           b.className = active
             ? "report-tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 text-white shadow-sm transition-all"
-            : "report-tab-btn px-4 py-2 text-xs font-semibold rounded-xl text-warmstone-600 hover:text-warmstone-900 hover:bg-cream-200 transition-all";
+            : "report-tab-btn px-4 py-2 text-xs font-bold rounded-xl text-warmstone-700 hover:text-warmstone-900 hover:bg-cream-200 transition-all";
         });
         Object.entries(panels).forEach(([key, panel]) => {
           if (!panel) return;
@@ -1310,7 +1321,8 @@
     await fetchAssignmentsAndSeedIfNeeded();
     await fetchEvaluations();
     if (state.evaluations.length > 0 && state.evaluations[0].status === "completed") {
-      await loadEvaluationById(state.evaluations[0].id);
+      // Pre-populate latest evaluation details in the background without forcing the tab away from setup!
+      await loadEvaluationById(state.evaluations[0].id, /* shouldSwitchFlow= */ false);
     }
     refreshIcons();
   });

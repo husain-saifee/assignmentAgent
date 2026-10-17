@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AETHER · Academic Evaluation Studio</title>
 
-    <!-- Google Fonts: Plus Jakarta Sans (Modern Geometric Display & UI) + JetBrains Mono -->
+    <!-- Google Fonts: Plus Jakarta Sans (Display & Interface) + JetBrains Mono (Technical) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,9 +30,9 @@
               cream: {
                 50: "#FFFDF9",
                 100: "#FAF7F2",
-                200: "#F4EFEA",
-                300: "#EAE3D9",
-                400: "#DDD4C7",
+                200: "#F5EFE6",
+                300: "#EAE0D3",
+                400: "#DDD0BF",
               },
               orange: {
                 50: "#FFF7ED",
@@ -44,17 +44,18 @@
                 600: "#EA580C",
                 700: "#C2410C",
                 800: "#9A3412",
+                900: "#7C2D12",
               },
               warmstone: {
                 900: "#1C1917",
                 800: "#292524",
                 700: "#44403C",
                 600: "#57534E",
-                500: "#78716C",
-                400: "#A8A29E",
-                300: "#D6D3D1",
-                200: "#E7E5E4",
-                100: "#F5F5F4",
+                500: "#6B6560",
+                400: "#78716C",
+                300: "#C4BBB0",
+                200: "#E5DDD3",
+                100: "#F3EDE5",
               },
             },
           },
@@ -66,14 +67,14 @@
       :root {
         --bg-page: #FAF7F2;
         --bg-card: #FFFFFF;
-        --bg-inner: #F7F3EC;
-        --border-card: #EAE3D9;
-        --border-light: #F0EAE1;
-        --orange-primary: #F97316;
-        --orange-dark: #EA580C;
+        --bg-inner: #F8F5EE;
+        --border-card: #E5DDD3;
+        --border-light: #EFE8DD;
+        --orange-primary: #EA580C;
+        --orange-dark: #C2410C;
         --text-headline: #1C1917;
-        --text-body: #44403C;
-        --text-muted: #78716C;
+        --text-body: #292524;
+        --text-muted: #57534E;
         --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
       }
 
@@ -82,8 +83,8 @@
       body {
         background-color: var(--bg-page);
         background-image: 
-          radial-gradient(ellipse 60% 50% at 50% -12%, rgba(249, 115, 22, 0.08), transparent 70%),
-          radial-gradient(ellipse 40% 40% at 90% 20%, rgba(251, 146, 60, 0.04), transparent);
+          radial-gradient(ellipse 60% 50% at 50% -10%, rgba(234, 88, 12, 0.07), transparent 70%),
+          radial-gradient(ellipse 40% 40% at 90% 15%, rgba(251, 146, 60, 0.04), transparent);
         color: var(--text-body);
         font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
         font-size: 14px;
@@ -91,12 +92,22 @@
         -webkit-font-smoothing: antialiased;
       }
 
+      /* High-contrast input and placeholder enforcement */
+      ::placeholder {
+        color: #78716C !important;
+        opacity: 1 !important;
+      }
+      select, option {
+        color: #1C1917 !important;
+        background-color: #FFFFFF !important;
+      }
+
       /* Clean Surface Cards with Crisp Divisions */
       .card-surface {
         background: var(--bg-card);
         border: 1px solid var(--border-card);
         border-radius: 20px;
-        box-shadow: 0 4px 24px -2px rgba(60, 45, 30, 0.04), 0 1px 3px 0 rgba(60, 45, 30, 0.03);
+        box-shadow: 0 4px 20px -2px rgba(40, 25, 10, 0.05), 0 1px 3px 0 rgba(40, 25, 10, 0.03);
       }
 
       .card-inner {
@@ -116,22 +127,22 @@
       }
       .btn:hover:not(:disabled) { transform: translateY(-1px); }
       .btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
-      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
       /* Primary Orange Button */
       .btn-orange {
         background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
         color: #FFFFFF;
-        box-shadow: 0 4px 14px 0 rgba(234, 88, 12, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        box-shadow: 0 4px 14px 0 rgba(234, 88, 12, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
       }
       .btn-orange:hover:not(:disabled) {
-        box-shadow: 0 6px 20px 0 rgba(234, 88, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        box-shadow: 0 6px 20px 0 rgba(234, 88, 12, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.35);
       }
 
-      /* Clean Input */
+      /* Clean High-Contrast Input */
       .input-warm {
         background: #FFFFFF;
-        border: 1px solid #E5DED4;
+        border: 1.5px solid #DDD4C7;
         border-radius: 12px;
         color: #1C1917;
         font-size: 13px;
@@ -140,19 +151,19 @@
         outline: none;
       }
       .input-warm:focus {
-        border-color: #F97316;
-        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+        border-color: #EA580C;
+        box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.18);
       }
 
-      /* Pipeline Pulse */
+      /* Pipeline Node Pulse */
       @keyframes pulseNodeWarm {
         0%, 100% {
-          border-color: #F97316;
-          box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18), 0 4px 16px rgba(249, 115, 22, 0.2);
+          border-color: #EA580C;
+          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2), 0 4px 16px rgba(234, 88, 12, 0.22);
         }
         50% {
-          border-color: #FB923C;
-          box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.08), 0 6px 22px rgba(249, 115, 22, 0.3);
+          border-color: #F97316;
+          box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.1), 0 6px 22px rgba(234, 88, 12, 0.32);
         }
       }
       .node-running {
@@ -161,11 +172,11 @@
       }
       .node-complete {
         background: #F0FDF4 !important;
-        border-color: #86EFAC !important;
+        border-color: #4ADE80 !important;
       }
       .node-error {
         background: #FEF2F2 !important;
-        border-color: #FCA5A5 !important;
+        border-color: #F87171 !important;
       }
 
       /* SVG Check Animation */
@@ -188,7 +199,7 @@
 
       /* Entrance Animation */
       @keyframes fadeSlideUp {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(8px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-enter { animation: fadeSlideUp 260ms var(--ease-out) forwards; }
@@ -197,48 +208,48 @@
     </style>
   </head>
 
-  <body class="min-h-screen flex flex-col selection:bg-orange-200 selection:text-orange-900">
+  <body class="min-h-screen flex flex-col selection:bg-orange-200 selection:text-orange-950">
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!--  CLEAN TOP NAVIGATION                                            -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#EAE3D9]">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E5DDD3] shadow-sm">
       <div class="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <!-- Brand Identity -->
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-md shadow-orange-500/25">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-md shadow-orange-500/30">
             <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
               <span class="font-extrabold text-xl tracking-tight text-warmstone-900">AETHER</span>
-              <span class="text-[10px] font-mono font-bold tracking-wider text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-md">
+              <span class="text-[11px] font-mono font-bold tracking-wider text-orange-900 bg-orange-100 border border-orange-300 px-2 py-0.5 rounded-md">
                 STUDIO
               </span>
             </div>
-            <p class="text-[11px] text-warmstone-500 hidden sm:block leading-none mt-0.5">
+            <p class="text-[11px] text-warmstone-600 hidden sm:block leading-none mt-0.5 font-medium">
               Autonomous 4-Agent Academic Evaluator
             </p>
           </div>
         </div>
 
-        <!-- Center: Flow Stepper Tabs (1. Setup vs 2. Report) -->
-        <div class="flex items-center gap-1.5 bg-cream-100 p-1 rounded-xl border border-[#EAE3D9]">
+        <!-- Center: Flow Stepper Navigation (1. Setup vs 2. Report) -->
+        <div class="flex items-center gap-1.5 bg-cream-100 p-1.5 rounded-xl border border-[#E5DDD3] shadow-inner">
           <button
             type="button"
             id="flow-tab-setup-btn"
-            class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-800 shadow-sm transition-all border border-[#EAE3D9]"
+            class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-600 text-white shadow-sm transition-all"
           >
-            <span class="w-4 h-4 rounded-full bg-orange-600 text-white text-[10px] font-mono font-bold flex items-center justify-center">1</span>
+            <span class="w-5 h-5 rounded-full bg-white text-orange-700 text-[11px] font-mono font-extrabold flex items-center justify-center">1</span>
             <span>Submission Setup</span>
           </button>
           <button
             type="button"
             id="flow-tab-report-btn"
-            class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold text-warmstone-600 hover:text-warmstone-900 transition-all border border-transparent"
+            class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-warmstone-700 hover:text-warmstone-900 hover:bg-white/80 transition-all border border-transparent"
           >
-            <span class="w-4 h-4 rounded-full bg-warmstone-300 text-warmstone-700 text-[10px] font-mono font-bold flex items-center justify-center">2</span>
+            <span class="w-5 h-5 rounded-full bg-stone-200 text-stone-800 text-[11px] font-mono font-extrabold flex items-center justify-center">2</span>
             <span>Evaluation Report</span>
-            <span id="report-ready-indicator" class="hidden w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="report-ready-indicator" class="hidden w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm animate-pulse"></span>
           </button>
         </div>
 
@@ -247,24 +258,24 @@
           <!-- Active Gemini Status -->
           <span
             id="env-key-badge"
-            class="hidden items-center gap-2 text-[12px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200"
+            class="hidden items-center gap-2 text-[12px] font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-300"
           >
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span class="hidden md:inline">Gemini Key Ready</span>
           </span>
 
           <!-- Model Selector -->
-          <div class="hidden lg:flex items-center gap-2 bg-cream-100 border border-[#EAE3D9] rounded-xl px-3 py-1.5">
-            <span class="text-[11px] font-mono uppercase tracking-wider text-warmstone-500 font-bold">Model</span>
+          <div class="hidden lg:flex items-center gap-2 bg-white border border-[#DDD4C7] rounded-xl px-3 py-1.5 shadow-sm">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-warmstone-600 font-extrabold">Model</span>
             <select
               id="model-select"
               aria-label="Select Gemini Model"
-              class="bg-transparent text-xs font-mono font-semibold text-orange-800 focus:outline-none cursor-pointer"
+              class="bg-white text-xs font-mono font-bold text-orange-900 focus:outline-none cursor-pointer"
             >
-              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-              <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-              <option value="gemini-3.8-flash">gemini-3.8-flash</option>
-              <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+              <option value="gemini-2.5-flash" class="bg-white text-stone-900 font-mono">gemini-2.5-flash</option>
+              <option value="gemini-2.5-pro" class="bg-white text-stone-900 font-mono">gemini-2.5-pro</option>
+              <option value="gemini-3.8-flash" class="bg-white text-stone-900 font-mono">gemini-3.8-flash</option>
+              <option value="gemini-3.1-pro-preview" class="bg-white text-stone-900 font-mono">gemini-3.1-pro-preview</option>
             </select>
           </div>
 
@@ -273,19 +284,19 @@
             <button
               id="toggle-key-popover-btn"
               type="button"
-              class="btn flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-white hover:bg-cream-100 text-warmstone-700 border border-[#EAE3D9] shadow-sm"
+              class="btn flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white hover:bg-cream-100 text-warmstone-800 border border-[#DDD4C7] shadow-sm"
               title="Configure custom Gemini API key"
             >
-              <i data-lucide="key-round" class="w-3.5 h-3.5 text-orange-600"></i>
+              <i data-lucide="key-round" class="w-4 h-4 text-orange-600"></i>
               <span class="hidden sm:inline">API Key</span>
             </button>
             <div
               id="key-popover-panel"
-              class="hidden absolute right-0 mt-2 w-80 card-surface rounded-2xl p-4 z-50 shadow-xl border border-[#EAE3D9]"
+              class="hidden absolute right-0 mt-2 w-80 card-surface rounded-2xl p-4 z-50 shadow-2xl border border-[#DDD4C7]"
             >
-              <div class="text-xs font-bold text-warmstone-900 mb-1">Custom Gemini API Key</div>
-              <p class="text-[11px] text-warmstone-500 mb-3">
-                Leave blank to automatically use the configured <code class="font-mono text-orange-700 font-bold">.env</code> key.
+              <div class="text-xs font-extrabold text-warmstone-900 mb-1">Custom Gemini API Key</div>
+              <p class="text-[12px] text-warmstone-600 mb-3 font-medium">
+                Leave blank to automatically use the configured <code class="font-mono text-orange-800 font-bold bg-orange-50 px-1 py-0.5 rounded">.env</code> key.
               </p>
               <input
                 id="api-key-input"
@@ -300,13 +311,13 @@
           <button
             id="open-history-drawer-btn"
             type="button"
-            class="btn flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 shadow-sm"
+            class="btn flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-950 border border-orange-300 shadow-sm"
           >
-            <i data-lucide="history" class="w-4 h-4 text-orange-600"></i>
+            <i data-lucide="history" class="w-4 h-4 text-orange-700"></i>
             <span>Archive</span>
             <span
               id="history-count-badge"
-              class="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-orange-200 text-orange-800 tabular-nums"
+              class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-orange-200 text-orange-950 tabular-nums"
             >
               0
             </span>
@@ -325,7 +336,7 @@
         <button
           id="status-banner-close"
           type="button"
-          class="text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 ml-4 font-bold"
+          class="text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded bg-black/10 hover:bg-black/20 ml-4 font-bold"
         >
           Dismiss
         </button>
@@ -333,7 +344,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!--  MAIN CONTENT WRAPPER                                            -->
+    <!--  MAIN CONTENT CONTAINER                                         -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <main class="max-w-[1400px] w-full mx-auto px-6 py-6 flex-1 flex flex-col gap-6">
 
@@ -341,11 +352,38 @@
       <!--  VIEW 1: CLEAN, UNCLUTTERED SUBMISSION SETUP                   -->
       <!-- ═════════════════════════════════════════════════════════════ -->
       <div id="flow-view-setup" class="space-y-6">
+
+        <!-- Orientation Card: Clear, simple, unconfusing header -->
+        <div class="card-surface p-5 bg-gradient-to-r from-orange-50 via-cream-50 to-white flex flex-col md:flex-row md:items-center justify-between gap-4 border border-[#E5DDD3]">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono uppercase tracking-widest text-orange-800 font-extrabold">Autonomous Evaluation Pipeline</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold">4 Specialist Agents</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-warmstone-900 tracking-tight">
+              Grade Assignments with Calibrated Reflection
+            </h1>
+            <p class="text-xs sm:text-sm text-warmstone-700 font-medium">
+              1. Select an assignment &rarr; 2. Provide student work &rarr; 3. Run evaluation for line-by-line verification and coaching.
+            </p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <button
+              id="load-sample-btn"
+              type="button"
+              class="btn inline-flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-md shadow-orange-600/25"
+            >
+              <i data-lucide="zap" class="w-4 h-4"></i>
+              <span>Auto-Fill Sample Work</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 1. Benchmark Selection Card -->
         <section class="card-surface p-6 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAE3D9]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5DDD3]">
             <div>
-              <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-700">
+              <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-800">
                 Step 1 · Choose Benchmark
               </div>
               <h2 class="text-lg font-bold text-warmstone-900">
@@ -356,14 +394,14 @@
               <button
                 id="open-new-assignment-btn"
                 type="button"
-                class="btn text-xs font-bold px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 shadow-sm"
+                class="btn text-xs font-bold px-3.5 py-1.5 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-950 border border-orange-300 shadow-sm"
               >
                 + Custom Assignment
               </button>
               <button
                 id="seed-btn"
                 type="button"
-                class="btn text-xs font-semibold px-3 py-1.5 rounded-lg text-warmstone-500 hover:text-warmstone-800 hover:bg-cream-100 border border-transparent hover:border-[#EAE3D9]"
+                class="btn text-xs font-semibold px-3 py-1.5 rounded-lg text-warmstone-700 hover:text-warmstone-900 hover:bg-cream-200 border border-[#E5DDD3]"
               >
                 Reset Demos
               </button>
@@ -372,33 +410,33 @@
 
           <!-- Benchmark Pills List -->
           <div id="assignments-list" class="flex flex-wrap items-center gap-2.5 pt-1">
-            <span class="text-xs text-warmstone-400 font-mono">Loading benchmarks...</span>
+            <span class="text-xs text-warmstone-600 font-mono font-medium">Loading benchmarks...</span>
           </div>
 
           <!-- Active Assignment Details Card -->
-          <div class="card-inner p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
+          <div class="card-inner p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 bg-cream-50">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <h3 id="assignment-detail-title" class="font-bold text-base text-warmstone-900 truncate">
+                <h3 id="assignment-detail-title" class="font-extrabold text-base text-warmstone-900 truncate">
                   Select an Assignment
                 </h3>
                 <span
                   id="assignment-type-badge"
-                  class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200"
+                  class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-900 border border-orange-300"
                 >
                   CODE
                 </span>
               </div>
-              <p class="text-xs text-warmstone-600 mt-1 line-clamp-1">
+              <p class="text-xs text-warmstone-700 mt-1 line-clamp-1 font-medium">
                 Structured criteria and grading bands are configured for this benchmark.
               </p>
             </div>
 
-            <!-- Inspect Rubric / Switch to spec modal -->
+            <!-- Inspect Rubric / Switch to spec toggle -->
             <button
               type="button"
               id="inspect-rubric-toggle-btn"
-              class="btn text-xs font-bold px-3.5 py-2 rounded-xl bg-white hover:bg-cream-100 text-warmstone-700 border border-[#EAE3D9] shrink-0 shadow-sm"
+              class="btn text-xs font-bold px-4 py-2 rounded-xl bg-white hover:bg-cream-100 text-warmstone-800 border border-[#DDD4C7] shrink-0 shadow-sm"
             >
               View Prompt &amp; Rubric Spec &rarr;
             </button>
@@ -407,30 +445,25 @@
 
         <!-- 2. Student Submission & Launch Form -->
         <section class="card-surface p-6 space-y-5">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAE3D9]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5DDD3]">
             <div>
-              <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-700">
+              <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-800">
                 Step 2 · Student Work
               </div>
               <h2 class="text-lg font-bold text-warmstone-900">
                 Provide Submission to Evaluate
               </h2>
             </div>
-            <button
-              id="load-sample-btn"
-              type="button"
-              class="btn inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 border border-orange-300 shadow-sm shrink-0"
-            >
-              <i data-lucide="zap" class="w-3.5 h-3.5 text-orange-600"></i>
-              <span>Auto-Fill Sample Submission</span>
-            </button>
+            <div class="text-xs text-warmstone-600 font-medium">
+              Accepts code files, written text, or multimodal PDFs
+            </div>
           </div>
 
           <form id="evaluate-form" class="space-y-4">
             <!-- Student Identifiers -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label for="student-name-input" class="block text-xs font-bold text-warmstone-700 mb-1">
+                <label for="student-name-input" class="block text-xs font-bold text-warmstone-800 mb-1">
                   Student Name
                 </label>
                 <input
@@ -438,29 +471,29 @@
                   type="text"
                   required
                   value="Alex Rivera"
-                  class="input-warm w-full text-sm font-medium"
+                  class="input-warm w-full text-sm font-semibold"
                 />
               </div>
               <div>
-                <label for="student-id-input" class="block text-xs font-bold text-warmstone-700 mb-1">
+                <label for="student-id-input" class="block text-xs font-bold text-warmstone-800 mb-1">
                   Student ID
                 </label>
                 <input
                   id="student-id-input"
                   type="text"
                   value="STU-2049"
-                  class="input-warm w-full text-sm font-mono"
+                  class="input-warm w-full text-sm font-mono font-semibold"
                 />
               </div>
               <div>
-                <label for="submission-filename-input" class="block text-xs font-bold text-warmstone-700 mb-1">
+                <label for="submission-filename-input" class="block text-xs font-bold text-warmstone-800 mb-1">
                   Filename
                 </label>
                 <input
                   id="submission-filename-input"
                   type="text"
                   value="lru_cache_student.py"
-                  class="input-warm w-full text-sm font-mono text-orange-700 font-semibold"
+                  class="input-warm w-full text-sm font-mono text-orange-800 font-bold"
                 />
               </div>
             </div>
@@ -468,7 +501,7 @@
             <!-- Drag and Drop Dropzone -->
             <div
               id="submission-dropzone"
-              class="border-2 border-dashed border-[#DDD4C7] hover:border-orange-500 rounded-2xl p-4 bg-cream-50 hover:bg-orange-50/50 cursor-pointer transition-all flex items-center justify-between gap-3"
+              class="border-2 border-dashed border-[#C4BBB0] hover:border-orange-500 rounded-2xl p-4 bg-cream-50 hover:bg-orange-50/60 cursor-pointer transition-all flex items-center justify-between gap-3"
             >
               <input
                 id="submission-file-input"
@@ -477,53 +510,53 @@
                 class="hidden"
               />
               <div class="flex items-center gap-3.5 min-w-0">
-                <div class="w-10 h-10 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center shrink-0">
-                  <i data-lucide="upload-cloud" class="w-5 h-5 text-orange-600"></i>
+                <div class="w-10 h-10 rounded-xl bg-orange-100 border border-orange-300 flex items-center justify-center shrink-0">
+                  <i data-lucide="upload-cloud" class="w-5 h-5 text-orange-700"></i>
                 </div>
                 <div class="min-w-0">
-                  <div class="text-xs sm:text-sm font-bold text-warmstone-800 truncate">
+                  <div class="text-xs sm:text-sm font-bold text-warmstone-900 truncate">
                     Drag and drop file here, or click to upload
                   </div>
-                  <div class="text-[11px] text-warmstone-500 truncate">
-                    Supports <span class="font-mono text-orange-700 font-semibold">.py, .js, .ipynb, .pdf, .md, .txt</span>
+                  <div class="text-[12px] text-warmstone-600 truncate font-medium">
+                    Supports <span class="font-mono text-orange-800 font-bold">.py, .js, .ipynb, .pdf, .md, .txt</span>
                   </div>
                 </div>
               </div>
               <span
                 id="ingested-file-badge"
-                class="hidden text-[11px] font-mono font-bold bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1 rounded-md shrink-0"
+                class="hidden text-[11px] font-mono font-bold bg-orange-100 text-orange-900 border border-orange-300 px-2.5 py-1 rounded-md shrink-0"
               ></span>
             </div>
 
             <!-- Code Buffer Area -->
-            <div class="rounded-xl overflow-hidden border border-[#EAE3D9] bg-cream-50">
-              <div class="px-4 py-2 bg-cream-100 border-b border-[#EAE3D9] flex items-center justify-between">
+            <div class="rounded-xl overflow-hidden border border-[#DDD4C7] bg-[#FFFDF9] shadow-inner">
+              <div class="px-4 py-2 bg-cream-100 border-b border-[#DDD4C7] flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-                  <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                  <span class="ml-2 text-[11px] font-mono text-warmstone-600 font-semibold">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  <span class="ml-2 text-[12px] font-mono text-warmstone-800 font-bold">
                     submission_buffer
                   </span>
                 </div>
-                <span class="text-[11px] font-mono text-warmstone-400 font-medium">UTF-8</span>
+                <span class="text-[11px] font-mono text-warmstone-600 font-bold">UTF-8</span>
               </div>
               <textarea
                 id="submission-text-input"
                 rows="12"
                 required
                 placeholder="Paste student code or essay text here..."
-                class="w-full text-xs font-mono leading-relaxed bg-transparent text-warmstone-900 placeholder:text-warmstone-400 p-4 focus:outline-none resize-y"
+                class="w-full text-xs font-mono leading-relaxed bg-transparent text-warmstone-950 placeholder:text-warmstone-500 p-4 focus:outline-none resize-y"
               ></textarea>
             </div>
 
             <!-- Bottom Actions -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <label class="flex items-center gap-2.5 text-xs text-warmstone-600 cursor-pointer select-none">
+              <label class="flex items-center gap-2.5 text-xs text-warmstone-700 cursor-pointer select-none font-medium">
                 <input
                   id="force-reparse-checkbox"
                   type="checkbox"
-                  class="rounded border-warmstone-400 text-orange-600 focus:ring-orange-500 w-4 h-4"
+                  class="rounded border-warmstone-400 text-orange-600 focus:ring-orange-500 w-4 h-4 cursor-pointer"
                 />
                 <span>Force fresh rubric re-parsing before evaluation</span>
               </label>
@@ -531,7 +564,7 @@
               <button
                 id="run-eval-btn"
                 type="submit"
-                class="btn btn-orange font-bold text-sm sm:text-base py-3.5 px-8 rounded-xl flex items-center justify-center gap-2.5 shadow-md shrink-0"
+                class="btn btn-orange font-extrabold text-sm sm:text-base py-3.5 px-8 rounded-xl flex items-center justify-center gap-2.5 shadow-lg shrink-0"
               >
                 <i data-lucide="play" class="w-5 h-5"></i>
                 <span>Run 4-Agent Evaluation &rarr;</span>
@@ -540,9 +573,9 @@
           </form>
         </section>
 
-        <!-- Hidden / Modal-able Inspector for Spec (keeps IDs alive) -->
-        <div id="left-pane-spec" class="hidden card-surface p-6 space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-[#EAE3D9]">
+        <!-- Collapsible Inspector for Spec -->
+        <div id="left-pane-spec" class="hidden card-surface p-6 space-y-4 animate-enter">
+          <div class="flex items-center justify-between pb-3 border-b border-[#E5DDD3]">
             <h3 class="text-base font-bold text-warmstone-900">
               Benchmark Specification &amp; Rubric
             </h3>
@@ -550,29 +583,29 @@
               <button
                 id="reparse-rubric-btn"
                 type="button"
-                class="btn text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-900 border border-orange-200"
+                class="btn text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-950 border border-orange-300"
               >
                 Parse / Refresh Rubric
               </button>
               <button
                 type="button"
                 id="close-spec-view-btn"
-                class="btn text-xs font-bold px-3 py-1.5 rounded-lg bg-white border border-[#EAE3D9] text-warmstone-700"
+                class="btn text-xs font-bold px-3 py-1.5 rounded-lg bg-white border border-[#DDD4C7] text-warmstone-800"
               >
                 Close Spec
               </button>
             </div>
           </div>
           <div class="space-y-2">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-500 font-bold">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-700 font-bold">
               Prompt
             </div>
-            <div id="assignment-prompt-view" class="p-4 rounded-xl bg-cream-50 border border-[#EAE3D9] text-xs text-warmstone-800 whitespace-pre-wrap leading-relaxed">
+            <div id="assignment-prompt-view" class="p-4 rounded-xl bg-cream-50 border border-[#E5DDD3] text-xs text-warmstone-900 whitespace-pre-wrap leading-relaxed font-medium">
               No assignment selected.
             </div>
           </div>
           <div class="space-y-2">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-orange-700 font-bold">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-orange-800 font-bold">
               Structured Criteria
             </div>
             <div id="structured-rubric-view" class="space-y-2.5">
@@ -580,14 +613,14 @@
             </div>
           </div>
           <div class="space-y-2">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-amber-700 font-bold">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-amber-800 font-bold">
               Educator Reference Solution
             </div>
-            <pre id="assignment-reference-view" class="p-4 rounded-xl bg-cream-100 border border-[#EAE3D9] text-warmstone-800 font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-x-auto">No reference solution provided.</pre>
+            <pre id="assignment-reference-view" class="p-4 rounded-xl bg-cream-100 border border-[#E5DDD3] text-warmstone-900 font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-x-auto">No reference solution provided.</pre>
           </div>
         </div>
 
-        <!-- Hidden left-pane-editor container for legacy app.js tab switcher compatibility -->
+        <!-- Hidden container for legacy tab switcher compatibility -->
         <div id="left-pane-editor" class="hidden"></div>
         <button id="left-tab-editor-btn" class="hidden"></button>
         <button id="left-tab-spec-btn" class="hidden"></button>
@@ -598,19 +631,19 @@
       <!-- ═════════════════════════════════════════════════════════════ -->
       <div id="flow-view-report" class="hidden space-y-6">
         <!-- Return to Setup Bar -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E5DDD3] shadow-sm">
           <button
             type="button"
             id="back-to-setup-btn"
-            class="btn inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-white hover:bg-cream-100 text-warmstone-800 border border-[#EAE3D9] shadow-sm"
+            class="btn inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 border border-orange-300 shadow-sm"
           >
-            <i data-lucide="arrow-left" class="w-4 h-4 text-orange-600"></i>
+            <i data-lucide="arrow-left" class="w-4 h-4 text-orange-700"></i>
             <span>&larr; Back to Submission Setup</span>
           </button>
 
           <span
             id="pipeline-overall-status"
-            class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-white text-warmstone-700 border border-[#EAE3D9] tabular-nums shadow-sm"
+            class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-cream-50 text-warmstone-900 border border-[#DDD4C7] tabular-nums shadow-sm"
           >
             Idle · Ready
           </span>
@@ -620,61 +653,61 @@
         <section class="card-surface p-4 bg-white" id="pipeline-stepper">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <!-- Stage 1 -->
-            <div id="stage-rubric_parser" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden">
+            <div id="stage-rubric_parser" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden bg-cream-50 border border-[#E5DDD3]">
               <div class="flex items-center justify-between gap-2 mb-1.5">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-600">
+                <span class="text-[11px] font-mono font-extrabold uppercase tracking-wider text-orange-800">
                   01 // RUBRIC PARSER
                 </span>
-                <span class="stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold">
+                <span class="stage-indicator text-[11px] font-mono text-warmstone-700 tabular-nums font-bold">
                   standby
                 </span>
               </div>
-              <div class="font-bold text-sm text-warmstone-900">
+              <div class="font-extrabold text-sm text-warmstone-900">
                 Rubric Deconstruction
               </div>
             </div>
 
             <!-- Stage 2 -->
-            <div id="stage-cot_evaluator" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden">
+            <div id="stage-cot_evaluator" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden bg-cream-50 border border-[#E5DDD3]">
               <div class="flex items-center justify-between gap-2 mb-1.5">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-600">
+                <span class="text-[11px] font-mono font-extrabold uppercase tracking-wider text-amber-800">
                   02 // CoT EVALUATOR
                 </span>
-                <span class="stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold">
+                <span class="stage-indicator text-[11px] font-mono text-warmstone-700 tabular-nums font-bold">
                   standby
                 </span>
               </div>
-              <div class="font-bold text-sm text-warmstone-900">
+              <div class="font-extrabold text-sm text-warmstone-900">
                 Semantic Code Trace
               </div>
             </div>
 
             <!-- Stage 3 -->
-            <div id="stage-reflection_auditor" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden">
+            <div id="stage-reflection_auditor" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden bg-cream-50 border border-[#E5DDD3]">
               <div class="flex items-center justify-between gap-2 mb-1.5">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-700">
+                <span class="text-[11px] font-mono font-extrabold uppercase tracking-wider text-orange-900">
                   03 // BIAS AUDITOR
                 </span>
-                <span class="stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold">
+                <span class="stage-indicator text-[11px] font-mono text-warmstone-700 tabular-nums font-bold">
                   standby
                 </span>
               </div>
-              <div class="font-bold text-sm text-warmstone-900">
+              <div class="font-extrabold text-sm text-warmstone-900">
                 Calibration Audit
               </div>
             </div>
 
             <!-- Stage 4 -->
-            <div id="stage-feedback_synthesizer" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden">
+            <div id="stage-feedback_synthesizer" class="stage-card card-inner rounded-xl p-3.5 relative overflow-hidden bg-cream-50 border border-[#E5DDD3]">
               <div class="flex items-center justify-between gap-2 mb-1.5">
-                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-700">
+                <span class="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-800">
                   04 // COACH
                 </span>
-                <span class="stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold">
+                <span class="stage-indicator text-[11px] font-mono text-warmstone-700 tabular-nums font-bold">
                   standby
                 </span>
               </div>
-              <div class="font-bold text-sm text-warmstone-900">
+              <div class="font-extrabold text-sm text-warmstone-900">
                 Pedagogical Synthesis
               </div>
             </div>
@@ -683,16 +716,16 @@
 
         <!-- Calibrated Bento Scorecard Header -->
         <section class="card-surface overflow-hidden">
-          <div class="p-6 bg-gradient-to-b from-cream-100/90 to-white border-b border-[#EAE3D9] space-y-5">
+          <div class="p-6 bg-gradient-to-b from-cream-100 to-white border-b border-[#E5DDD3] space-y-5">
             <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div class="flex items-center gap-2.5 mb-1">
-                  <span class="text-[11px] font-mono uppercase tracking-widest text-orange-700 font-bold">
+                  <span class="text-[11px] font-mono uppercase tracking-widest text-orange-800 font-extrabold">
                     Assessment Telemetry
                   </span>
                   <span
                     id="report-audit-badge"
-                    class="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    class="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300"
                   >
                     Ready
                   </span>
@@ -711,7 +744,7 @@
                   id="export-md-link"
                   href="#"
                   target="_blank"
-                  class="btn pointer-events-none opacity-40 inline-flex items-center gap-1.5 bg-white hover:bg-cream-100 text-warmstone-700 text-xs font-mono font-bold px-3.5 py-2 rounded-xl border border-[#EAE3D9] shadow-sm"
+                  class="btn pointer-events-none opacity-40 inline-flex items-center gap-1.5 bg-white hover:bg-cream-100 text-warmstone-800 text-xs font-mono font-bold px-3.5 py-2 rounded-xl border border-[#DDD4C7] shadow-sm"
                 >
                   <span>.MD Report</span>
                 </a>
@@ -729,16 +762,16 @@
             <!-- Bento Score Grid -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               <!-- Radial Gauge (4 cols) -->
-              <div class="md:col-span-4 card-inner rounded-2xl p-4 flex items-center gap-4 bg-white border border-[#EAE3D9] shadow-sm">
+              <div class="md:col-span-4 card-inner rounded-2xl p-4 flex items-center gap-4 bg-white border border-[#E5DDD3] shadow-sm">
                 <div class="relative w-20 h-20 shrink-0 flex items-center justify-center">
                   <svg class="w-20 h-20" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="34" fill="transparent" stroke="#EAE3D9" stroke-width="6" />
+                    <circle cx="40" cy="40" r="34" fill="transparent" stroke="#E5DDD3" stroke-width="6" />
                     <circle
                       id="score-ring-progress"
                       class="score-ring-circle"
                       cx="40" cy="40" r="34"
                       fill="transparent"
-                      stroke="#F97316"
+                      stroke="#EA580C"
                       stroke-width="6"
                       stroke-linecap="round"
                       stroke-dasharray="213.6"
@@ -750,53 +783,53 @@
                   </div>
                 </div>
                 <div>
-                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-500 font-bold">
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-700 font-extrabold">
                     Mastery Score
                   </div>
                   <div id="hero-percentage" class="text-2xl font-extrabold text-orange-600 tabular-nums">
                     --
                   </div>
-                  <div class="text-[11px] text-warmstone-500 font-medium">Calibrated Total</div>
+                  <div class="text-[11px] text-warmstone-600 font-bold">Calibrated Total</div>
                 </div>
               </div>
 
               <!-- 3 Metric Cards (8 cols) -->
               <div class="md:col-span-8 grid grid-cols-3 gap-3">
-                <div class="card-inner rounded-2xl p-4 bg-white border border-[#EAE3D9] shadow-sm">
-                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-500 font-bold">
+                <div class="card-inner rounded-2xl p-4 bg-white border border-[#E5DDD3] shadow-sm">
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-700 font-bold">
                     Initial CoT
                   </div>
-                  <div id="hero-initial-score" class="text-xl sm:text-2xl font-extrabold text-warmstone-800 mt-1 tabular-nums">
+                  <div id="hero-initial-score" class="text-xl sm:text-2xl font-extrabold text-warmstone-900 mt-1 tabular-nums">
                     --
                   </div>
-                  <div class="text-[11px] text-warmstone-400 mt-0.5 font-medium">Agent 02 Pass</div>
+                  <div class="text-[11px] text-warmstone-600 mt-0.5 font-semibold">Agent 02 Pass</div>
                 </div>
 
-                <div class="card-inner rounded-2xl p-4 bg-white border border-[#EAE3D9] shadow-sm">
-                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-500 font-bold">
+                <div class="card-inner rounded-2xl p-4 bg-white border border-[#E5DDD3] shadow-sm">
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-warmstone-700 font-bold">
                     Bias Delta
                   </div>
-                  <div id="hero-calibration-delta" class="text-xl sm:text-2xl font-extrabold text-amber-600 mt-1 tabular-nums">
+                  <div id="hero-calibration-delta" class="text-xl sm:text-2xl font-extrabold text-amber-700 mt-1 tabular-nums">
                     --
                   </div>
-                  <div class="text-[11px] text-warmstone-400 mt-0.5 font-medium">Agent 03 Audit</div>
+                  <div class="text-[11px] text-warmstone-600 mt-0.5 font-semibold">Agent 03 Audit</div>
                 </div>
 
-                <div class="rounded-2xl p-4 bg-orange-100 border border-orange-200 shadow-sm">
-                  <div class="text-[11px] font-mono uppercase tracking-wider text-orange-800 font-bold">
+                <div class="rounded-2xl p-4 bg-orange-100 border border-orange-300 shadow-sm">
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-orange-900 font-bold">
                     Final Score
                   </div>
-                  <div id="hero-final-score" class="text-xl sm:text-2xl font-extrabold text-orange-900 mt-1 tabular-nums">
+                  <div id="hero-final-score" class="text-xl sm:text-2xl font-extrabold text-orange-950 mt-1 tabular-nums">
                     --
                   </div>
-                  <div class="text-[11px] text-orange-700 mt-0.5 font-medium">Clamped Total</div>
+                  <div class="text-[11px] text-orange-800 mt-0.5 font-bold">Clamped Total</div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Report Tabs Navigation -->
-          <div class="px-6 py-3 bg-cream-50 border-b border-[#EAE3D9] flex flex-wrap gap-2">
+          <div class="px-6 py-3 bg-cream-50 border-b border-[#E5DDD3] flex flex-wrap gap-2">
             <button
               type="button"
               data-tab="feedback"
@@ -807,21 +840,21 @@
             <button
               type="button"
               data-tab="criteria"
-              class="report-tab-btn px-4 py-2 text-xs font-semibold rounded-xl text-warmstone-600 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
+              class="report-tab-btn px-4 py-2 text-xs font-bold rounded-xl text-warmstone-700 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
             >
               Per-Criterion CoT
             </button>
             <button
               type="button"
               data-tab="reflection"
-              class="report-tab-btn px-4 py-2 text-xs font-semibold rounded-xl text-warmstone-600 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
+              class="report-tab-btn px-4 py-2 text-xs font-bold rounded-xl text-warmstone-700 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
             >
               Reflection &amp; Bias Matrix
             </button>
             <button
               type="button"
               data-tab="export"
-              class="report-tab-btn px-4 py-2 text-xs font-semibold rounded-xl text-warmstone-600 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
+              class="report-tab-btn px-4 py-2 text-xs font-bold rounded-xl text-warmstone-700 hover:text-warmstone-900 hover:bg-cream-200 transition-all"
             >
               Export Package
             </button>
@@ -832,13 +865,13 @@
             <!-- Tab 1: Feedback -->
             <div id="tab-panel-feedback" class="space-y-6">
               <div class="py-16 text-center max-w-md mx-auto space-y-3">
-                <div class="w-14 h-14 rounded-2xl bg-orange-100 border border-orange-200 mx-auto flex items-center justify-center">
-                  <i data-lucide="play" class="w-6 h-6 text-orange-600"></i>
+                <div class="w-14 h-14 rounded-2xl bg-orange-100 border border-orange-300 mx-auto flex items-center justify-center">
+                  <i data-lucide="play" class="w-6 h-6 text-orange-700"></i>
                 </div>
                 <h4 class="text-lg font-bold text-warmstone-900">
                   Ready to Evaluate
                 </h4>
-                <p class="text-xs text-warmstone-600 leading-relaxed">
+                <p class="text-xs text-warmstone-700 leading-relaxed font-medium">
                   Click <strong>Run 4-Agent Evaluation</strong> to stream rubric parsing, Chain-of-Thought grading, bias calibration, and personalized coaching.
                 </p>
               </div>
@@ -846,26 +879,26 @@
 
             <!-- Tab 2: Criteria -->
             <div id="tab-panel-criteria" class="hidden space-y-4">
-              <p class="text-warmstone-400 text-center py-12 text-xs">
+              <p class="text-warmstone-600 text-center py-12 text-xs font-semibold">
                 Per-criterion Chain-of-Thought traces will stream here as Agent 02 completes.
               </p>
             </div>
 
             <!-- Tab 3: Reflection -->
             <div id="tab-panel-reflection" class="hidden space-y-4">
-              <p class="text-warmstone-400 text-center py-12 text-xs">
+              <p class="text-warmstone-600 text-center py-12 text-xs font-semibold">
                 Reflection &amp; bias calibration audit will stream here as Agent 03 completes.
               </p>
             </div>
 
             <!-- Tab 4: Export -->
             <div id="tab-panel-export" class="hidden space-y-4">
-              <div class="card-inner rounded-2xl p-6 space-y-3 bg-cream-50">
+              <div class="card-inner rounded-2xl p-6 space-y-3 bg-cream-50 border border-[#E5DDD3]">
                 <h4 class="text-base font-bold text-warmstone-900">
                   Export Official Assessment Package
                 </h4>
-                <p class="text-xs text-warmstone-600 leading-relaxed">
-                  Download the complete evaluation as a portable Markdown file (<code class="font-mono text-orange-700 font-bold">.md</code>) or open the formatted printable report (<code class="font-mono text-orange-700 font-bold">.html / PDF</code>) using the top buttons.
+                <p class="text-xs text-warmstone-700 leading-relaxed font-medium">
+                  Download the complete evaluation as a portable Markdown file (<code class="font-mono text-orange-800 font-bold bg-orange-50 px-1 py-0.5 rounded">.md</code>) or open the formatted printable report (<code class="font-mono text-orange-800 font-bold bg-orange-50 px-1 py-0.5 rounded">.html / PDF</code>) using the top buttons.
                 </p>
               </div>
             </div>
@@ -878,12 +911,12 @@
     <!--  SLIDE-OVER ARCHIVE DRAWER                                      -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <div id="history-drawer-modal" class="fixed inset-0 z-50 hidden">
-      <div id="history-drawer-backdrop" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm"></div>
+      <div id="history-drawer-backdrop" class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm"></div>
       <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
-        <div class="w-screen max-w-md bg-white border-l border-[#EAE3D9] flex flex-col justify-between shadow-2xl">
-          <div class="p-5 bg-cream-100/80 border-b border-[#EAE3D9] flex items-center justify-between">
+        <div class="w-screen max-w-md bg-white border-l border-[#E5DDD3] flex flex-col justify-between shadow-2xl">
+          <div class="p-5 bg-cream-100 border-b border-[#E5DDD3] flex items-center justify-between">
             <div>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-orange-700 font-bold">
+              <span class="text-[10px] font-mono uppercase tracking-widest text-orange-800 font-bold">
                 SQLite Persistence
               </span>
               <h2 class="text-lg font-bold text-warmstone-900">
@@ -894,14 +927,14 @@
               <button
                 id="refresh-history-btn"
                 type="button"
-                class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-white hover:bg-cream-100 text-warmstone-700 border border-[#EAE3D9] shadow-sm"
+                class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-white hover:bg-cream-100 text-warmstone-800 border border-[#DDD4C7] shadow-sm"
               >
                 Refresh
               </button>
               <button
                 id="close-history-drawer-btn"
                 type="button"
-                class="w-8 h-8 rounded-lg bg-white hover:bg-cream-100 text-warmstone-700 border border-[#EAE3D9] flex items-center justify-center text-lg font-bold shadow-sm"
+                class="w-8 h-8 rounded-lg bg-white hover:bg-cream-100 text-warmstone-800 border border-[#DDD4C7] flex items-center justify-center text-lg font-bold shadow-sm"
               >
                 &times;
               </button>
@@ -909,7 +942,7 @@
           </div>
 
           <div id="evaluations-history-list" class="flex-1 overflow-y-auto p-4 space-y-2.5 bg-cream-50">
-            <div class="text-xs text-warmstone-400 py-10 text-center">
+            <div class="text-xs text-warmstone-600 font-semibold py-10 text-center">
               No evaluations recorded yet.
             </div>
           </div>
@@ -922,12 +955,12 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <div
       id="new-assignment-modal"
-      class="fixed inset-0 z-50 hidden bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 hidden bg-stone-900/50 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div class="card-surface rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl bg-white">
-        <div class="px-6 py-4 bg-cream-100/80 border-b border-[#EAE3D9] flex items-center justify-between">
+      <div class="card-surface rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl bg-white border border-[#E5DDD3]">
+        <div class="px-6 py-4 bg-cream-100 border-b border-[#E5DDD3] flex items-center justify-between">
           <div>
-            <span class="text-[10px] font-mono uppercase tracking-widest text-orange-700 font-bold">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-orange-800 font-bold">
               Benchmark Authoring
             </span>
             <h2 class="text-xl font-bold text-warmstone-900">
@@ -937,7 +970,7 @@
           <button
             id="close-new-assignment-btn"
             type="button"
-            class="w-8 h-8 rounded-lg bg-white hover:bg-cream-100 text-warmstone-600 border border-[#EAE3D9] flex items-center justify-center text-lg font-bold"
+            class="w-8 h-8 rounded-lg bg-white hover:bg-cream-100 text-warmstone-800 border border-[#DDD4C7] flex items-center justify-center text-lg font-bold"
           >
             &times;
           </button>
@@ -954,7 +987,7 @@
                 type="text"
                 required
                 placeholder="e.g., CS301: Distributed Raft Consensus"
-                class="input-warm w-full text-sm font-medium"
+                class="input-warm w-full text-sm font-semibold"
               />
             </div>
             <div>
@@ -963,11 +996,11 @@
               </label>
               <select
                 id="new-assign-type"
-                class="input-warm w-full text-sm font-medium"
+                class="input-warm w-full text-sm font-semibold bg-white text-stone-900 cursor-pointer"
               >
-                <option value="code">Code</option>
-                <option value="theory">Theory / Written</option>
-                <option value="hybrid">Hybrid</option>
+                <option value="code" class="bg-white text-stone-900">Code</option>
+                <option value="theory" class="bg-white text-stone-900">Theory / Written</option>
+                <option value="hybrid" class="bg-white text-stone-900">Hybrid</option>
               </select>
             </div>
           </div>
@@ -977,7 +1010,7 @@
               <label for="new-assign-prompt" class="font-bold text-warmstone-800">
                 Assignment Prompt
               </label>
-              <label class="text-orange-700 hover:text-orange-600 cursor-pointer font-mono font-bold">
+              <label class="text-orange-800 hover:text-orange-950 cursor-pointer font-mono font-bold">
                 <span>+ Upload (.md/.txt/.pdf)</span>
                 <input id="new-assign-prompt-file" type="file" accept=".md,.txt,.pdf,.ipynb" class="hidden" />
               </label>
@@ -996,7 +1029,7 @@
               <label for="new-assign-rubric" class="font-bold text-warmstone-800">
                 Raw Grading Rubric
               </label>
-              <label class="text-orange-700 hover:text-orange-600 cursor-pointer font-mono font-bold">
+              <label class="text-orange-800 hover:text-orange-950 cursor-pointer font-mono font-bold">
                 <span>+ Upload (.md/.txt/.pdf)</span>
                 <input id="new-assign-rubric-file" type="file" accept=".md,.txt,.pdf,.json" class="hidden" />
               </label>
@@ -1022,16 +1055,16 @@
             ></textarea>
           </div>
 
-          <label class="flex items-center gap-2.5 text-warmstone-700 cursor-pointer">
-            <input id="new-assign-parse-now" type="checkbox" class="rounded border-warmstone-300 text-orange-600 w-4 h-4" />
+          <label class="flex items-center gap-2.5 text-warmstone-800 cursor-pointer font-medium">
+            <input id="new-assign-parse-now" type="checkbox" class="rounded border-warmstone-400 text-orange-600 w-4 h-4 cursor-pointer" />
             <span>Immediately parse structured rubric via Gemini API</span>
           </label>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#EAE3D9]">
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#E5DDD3]">
             <button
               id="cancel-new-assignment-btn"
               type="button"
-              class="btn px-4 py-2 rounded-xl border border-[#DDD4C7] text-warmstone-700 hover:bg-cream-100 font-bold"
+              class="btn px-4 py-2 rounded-xl border border-[#DDD4C7] text-warmstone-800 hover:bg-cream-100 font-bold"
             >
               Cancel
             </button>
