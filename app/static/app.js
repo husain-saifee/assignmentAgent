@@ -52,10 +52,10 @@
     wrapper.classList.remove("hidden");
     if (isError) {
       inner.className =
-        "rounded-xl px-4 py-3 text-[13px] font-medium flex items-center justify-between border bg-red-950/90 border-red-500/40 text-red-200 shadow-lg animate-enter";
+        "rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold flex items-center justify-between border bg-rose-50 border-rose-300 text-rose-900 shadow-sm animate-enter";
     } else {
       inner.className =
-        "rounded-xl px-4 py-3 text-[13px] font-medium flex items-center justify-between border bg-emerald-950/90 border-emerald-500/40 text-emerald-200 shadow-lg animate-enter";
+        "rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold flex items-center justify-between border bg-orange-50 border-orange-300 text-orange-950 shadow-sm animate-enter";
     }
   }
 
@@ -90,38 +90,41 @@
     const offset = circumference - (clamped / 100) * circumference;
     ring.style.strokeDashoffset = String(offset.toFixed(1));
     if (clamped >= 85) {
-      ring.setAttribute("stroke", "#34d399"); // success emerald
+      ring.setAttribute("stroke", "#059669"); // Emerald
     } else if (clamped >= 70) {
-      ring.setAttribute("stroke", "#8b5cf6"); // violet accent
+      ring.setAttribute("stroke", "#EA580C"); // Orange
     } else if (clamped >= 55) {
-      ring.setAttribute("stroke", "#fbbf24"); // warning amber
+      ring.setAttribute("stroke", "#D97706"); // Amber
     } else {
-      ring.setAttribute("stroke", "#f87171"); // danger red
+      ring.setAttribute("stroke", "#DC2626"); // Red
     }
   }
 
-  function switchLeftPane(mode) {
-    const editorPane = el("left-pane-editor");
-    const specPane = el("left-pane-spec");
-    const editorBtn = el("left-tab-editor-btn");
-    const specBtn = el("left-tab-spec-btn");
-    if (!editorPane || !specPane || !editorBtn || !specBtn) return;
+  function switchFlow(view) {
+    const setupView = el("flow-view-setup");
+    const reportView = el("flow-view-report");
+    const setupBtn = el("flow-tab-setup-btn");
+    const reportBtn = el("flow-tab-report-btn");
+    if (!setupView || !reportView || !setupBtn || !reportBtn) return;
 
-    if (mode === "spec") {
-      editorPane.classList.add("hidden");
-      specPane.classList.remove("hidden");
-      specBtn.className =
-        "px-3 py-1.5 rounded-md text-[12px] font-semibold bg-accent-dim text-violet-300 border border-accent-border transition-all";
-      editorBtn.className =
-        "px-3 py-1.5 rounded-md text-[12px] font-medium text-zinc-500 hover:text-zinc-300 border border-transparent transition-all";
+    if (view === "report") {
+      setupView.classList.add("hidden");
+      reportView.classList.remove("hidden");
+      reportBtn.className =
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-800 shadow-sm transition-all border border-[#EAE3D9]";
+      setupBtn.className =
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold text-warmstone-600 hover:text-warmstone-900 transition-all border border-transparent";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      specPane.classList.add("hidden");
-      editorPane.classList.remove("hidden");
-      editorBtn.className =
-        "px-3 py-1.5 rounded-md text-[12px] font-semibold bg-accent-dim text-violet-300 border border-accent-border transition-all";
-      specBtn.className =
-        "px-3 py-1.5 rounded-md text-[12px] font-medium text-zinc-500 hover:text-zinc-300 border border-transparent transition-all";
+      reportView.classList.add("hidden");
+      setupView.classList.remove("hidden");
+      setupBtn.className =
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-orange-800 shadow-sm transition-all border border-[#EAE3D9]";
+      reportBtn.className =
+        "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold text-warmstone-600 hover:text-warmstone-900 transition-all border border-transparent";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
+    refreshIcons();
   }
 
   function resetPipelineStepper(statusLabel = "Idle · Ready") {
@@ -129,16 +132,16 @@
     if (overall) {
       overall.textContent = statusLabel;
       overall.className =
-        "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-surface-0 text-zinc-400 border border-edge tabular-nums";
+        "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-white text-warmstone-700 border border-[#EAE3D9] tabular-nums shadow-sm";
     }
     for (const stage of STAGES) {
       const card = el(`stage-${stage}`);
       if (!card) continue;
-      card.className = "stage-card card-inner rounded-xl p-4 relative overflow-hidden";
+      card.className = "stage-card card-inner rounded-xl p-3.5 relative overflow-hidden";
       const ind = card.querySelector(".stage-indicator");
       if (ind) {
-        ind.innerHTML = `<span class="text-zinc-500">standby</span>`;
-        ind.className = "stage-indicator text-[10px] font-mono text-zinc-500 tabular-nums";
+        ind.innerHTML = `<span class="text-warmstone-400">standby</span>`;
+        ind.className = "stage-indicator text-[11px] font-mono text-warmstone-400 tabular-nums font-semibold";
       }
     }
   }
@@ -150,37 +153,37 @@
 
     if (mode === "running") {
       card.className =
-        "stage-card card-inner node-running rounded-xl p-4 relative overflow-hidden";
+        "stage-card card-inner node-running rounded-xl p-3.5 relative overflow-hidden";
       if (ind) {
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1.5 text-violet-300 font-semibold">
-            <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping"></span>
+          <span class="inline-flex items-center gap-1.5 text-orange-700 font-bold">
+            <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
             <span>active...</span>
           </span>
         `;
-        ind.className = "stage-indicator text-[10px] font-mono tabular-nums";
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
       }
     } else if (mode === "complete") {
       card.className =
-        "stage-card card-inner node-complete rounded-xl p-4 relative overflow-hidden";
+        "stage-card card-inner node-complete rounded-xl p-3.5 relative overflow-hidden";
       if (ind) {
         const label = escapeHtml(extraText || "done");
         ind.innerHTML = `
-          <span class="inline-flex items-center gap-1 text-emerald-300 font-semibold">
-            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
+          <span class="inline-flex items-center gap-1 text-emerald-800 font-bold">
+            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
               <path class="svg-check-anim" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <span>${label}</span>
           </span>
         `;
-        ind.className = "stage-indicator text-[10px] font-mono tabular-nums";
+        ind.className = "stage-indicator text-[11px] font-mono tabular-nums";
       }
     } else if (mode === "error") {
       card.className =
-        "stage-card card-inner node-error rounded-xl p-4 relative overflow-hidden";
+        "stage-card card-inner node-error rounded-xl p-3.5 relative overflow-hidden";
       if (ind) {
         ind.textContent = "failed";
-        ind.className = "stage-indicator text-[10px] font-mono text-rose-400 font-semibold";
+        ind.className = "stage-indicator text-[11px] font-mono text-rose-600 font-bold";
       }
     }
   }
@@ -190,7 +193,7 @@
     if (!container) return;
 
     if (!rubric || !Array.isArray(rubric.criteria) || rubric.criteria.length === 0) {
-      container.innerHTML = `<div class="p-4 rounded-xl bg-surface-0 border border-edge text-[12px] text-zinc-500">No structured rubric cached yet. Click <strong>Parse / Refresh</strong> above or run an evaluation to parse automatically.</div>`;
+      container.innerHTML = `<div class="p-4 rounded-xl bg-cream-50 border border-[#EAE3D9] text-xs text-warmstone-600">No structured rubric cached yet. Click <strong>Parse / Refresh Rubric</strong> above or run an evaluation to parse automatically.</div>`;
       return;
     }
 
@@ -199,22 +202,22 @@
         const bandsHtml = (c.scoring_bands || [])
           .map(
             (b) =>
-              `<span class="inline-block bg-surface-2 border border-edge rounded px-2 py-0.5 text-[10px] font-mono text-zinc-400">${escapeHtml(
+              `<span class="inline-block bg-cream-100 border border-[#EAE3D9] rounded-md px-2 py-0.5 text-[10px] font-mono text-warmstone-700 font-medium">${escapeHtml(
                 b.band_label
-              )}: <strong class="text-violet-300">${escapeHtml(b.points_range)} pts</strong></span>`
+              )}: <strong class="text-orange-700">${escapeHtml(b.points_range)} pts</strong></span>`
           )
           .join(" ");
         return `
-        <div class="rounded-xl p-4 bg-surface-0 border border-edge space-y-2">
+        <div class="rounded-xl p-4 bg-white border border-[#EAE3D9] shadow-sm space-y-2">
           <div class="flex items-center justify-between gap-2">
-            <span class="font-semibold text-[13px] text-white">${escapeHtml(
+            <span class="font-bold text-sm text-warmstone-900">${escapeHtml(
               c.criterion_id
             )} · ${escapeHtml(c.title)}</span>
-            <span class="font-mono font-bold text-[11px] px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border tabular-nums">${Number(
+            <span class="font-mono font-bold text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200 tabular-nums">${Number(
               c.max_points
             ).toFixed(1)} pts</span>
           </div>
-          <p class="text-zinc-400 text-[12px] leading-relaxed">${escapeHtml(c.description)}</p>
+          <p class="text-warmstone-600 text-xs leading-relaxed">${escapeHtml(c.description)}</p>
           <div class="flex flex-wrap gap-1.5 pt-1">${bandsHtml}</div>
         </div>
       `;
@@ -222,11 +225,11 @@
       .join("");
 
     container.innerHTML = `
-      <div class="flex items-center justify-between bg-accent-dim border border-accent-border px-3.5 py-2.5 rounded-xl mb-3 text-[12px]">
-        <span class="font-semibold text-violet-200">${escapeHtml(
+      <div class="flex items-center justify-between bg-orange-50 border border-orange-200 px-3.5 py-2.5 rounded-xl mb-2.5 text-xs">
+        <span class="font-bold text-orange-900">${escapeHtml(
           rubric.assignment_title || "Parsed Rubric"
         )}</span>
-        <span class="font-mono font-bold text-emerald-300 tabular-nums">Total: ${Number(
+        <span class="font-mono font-bold text-emerald-800 tabular-nums">Total: ${Number(
           rubric.total_points || 0
         ).toFixed(1)} pts</span>
       </div>
@@ -239,7 +242,7 @@
     if (!container) return;
 
     if (state.assignments.length === 0) {
-      container.innerHTML = `<span class="text-[12px] text-zinc-500 font-mono">No benchmarks found. Click "Reset Demos".</span>`;
+      container.innerHTML = `<span class="text-xs text-warmstone-500">No benchmarks found. Click "Reset Demos".</span>`;
       return;
     }
 
@@ -248,32 +251,32 @@
         const isSelected = a.id === state.activeAssignmentId;
         const typeDot =
           a.assignment_type === "code"
-            ? "bg-violet-400"
+            ? "bg-orange-500"
             : a.assignment_type === "theory"
-            ? "bg-amber-400"
-            : "bg-teal-400";
+            ? "bg-amber-500"
+            : "bg-emerald-500";
 
         return `
         <div
           data-assignment-id="${escapeHtml(a.id)}"
-          class="assign-card-item btn inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg cursor-pointer text-[12px] border transition-all ${
+          class="assign-card-item btn inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl cursor-pointer text-xs border transition-all ${
             isSelected
-              ? "bg-accent-dim border-accent-border text-white shadow-sm"
-              : "bg-surface-2 border-edge text-zinc-400 hover:text-zinc-200 hover:bg-surface-3"
+              ? "bg-orange-100 border-orange-400 text-orange-950 font-bold shadow-sm"
+              : "bg-white border-[#EAE3D9] text-warmstone-700 hover:border-orange-300 hover:text-warmstone-900 shadow-sm"
           }"
         >
-          <span class="w-1.5 h-1.5 rounded-full ${typeDot}"></span>
-          <span class="font-medium truncate max-w-[200px] sm:max-w-[240px]">${escapeHtml(
+          <span class="w-2 h-2 rounded-full ${typeDot}"></span>
+          <span class="font-semibold truncate max-w-[200px] sm:max-w-[260px]">${escapeHtml(
             a.title
           )}</span>
-          <span class="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-black/40 text-zinc-500">${escapeHtml(
+          <span class="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-black/5 text-warmstone-500">${escapeHtml(
             a.assignment_type
           )}</span>
           <button
             type="button"
             data-delete-assignment="${escapeHtml(a.id)}"
             title="Delete benchmark"
-            class="text-zinc-500 hover:text-rose-400 ml-0.5 font-bold leading-none"
+            class="text-warmstone-400 hover:text-rose-600 ml-1 font-bold leading-none"
           >
             &times;
           </button>
@@ -357,7 +360,7 @@
     if (!container) return;
 
     if (state.evaluations.length === 0) {
-      container.innerHTML = `<div class="text-[12px] text-zinc-600 py-10 text-center">No evaluations recorded yet.</div>`;
+      container.innerHTML = `<div class="text-xs text-warmstone-400 py-10 text-center">No evaluations recorded yet.</div>`;
       return;
     }
 
@@ -366,32 +369,32 @@
         const isSelected = state.activeEvaluation && state.activeEvaluation.id === ev.id;
         const statusColor =
           ev.status === "completed"
-            ? "bg-success-dim text-emerald-300 border-success-border"
+            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
             : ev.status === "failed"
-            ? "bg-danger-dim text-rose-300 border-danger-border"
-            : "bg-warn-dim text-amber-300 border-warn-border";
+            ? "bg-rose-50 text-rose-800 border-rose-200"
+            : "bg-amber-50 text-amber-800 border-amber-200";
         return `
         <div
           data-eval-id="${escapeHtml(ev.id)}"
-          class="eval-history-row btn rounded-xl p-3 cursor-pointer transition-all flex items-center justify-between gap-3 border ${
+          class="eval-history-row btn rounded-xl p-3.5 cursor-pointer transition-all flex items-center justify-between gap-3 border ${
             isSelected
-              ? "bg-accent-dim border-accent-border text-white shadow-sm"
-              : "bg-surface-2 border-edge text-zinc-300 hover:bg-surface-3"
+              ? "bg-orange-100 border-orange-300 shadow-sm"
+              : "bg-white border-[#EAE3D9] hover:bg-cream-100 shadow-sm"
           }"
         >
           <div class="min-w-0">
-            <div class="text-[13px] font-semibold text-white truncate">
+            <div class="text-xs font-bold text-warmstone-900 truncate">
               ${escapeHtml(ev.student_name)}
-              <span class="text-zinc-500 font-normal">${
+              <span class="text-warmstone-500 font-normal">${
                 ev.student_id ? `(${escapeHtml(ev.student_id)})` : ""
               }</span>
             </div>
-            <div class="text-[11px] text-zinc-500 truncate font-mono mt-0.5">${escapeHtml(
+            <div class="text-[11px] text-warmstone-500 truncate font-mono mt-0.5">${escapeHtml(
               ev.submission_filename
             )}</div>
           </div>
           <div class="text-right shrink-0">
-            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border tabular-nums ${statusColor}">
+            <span class="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border tabular-nums ${statusColor}">
               ${
                 ev.status === "completed"
                   ? `${Number(ev.total_final_score).toFixed(1)}/${Number(
@@ -420,16 +423,16 @@
     const panel = el("tab-panel-feedback");
     if (!panel) return;
     if (!feedback) {
-      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No pedagogical feedback available for this evaluation.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No pedagogical feedback available for this evaluation.</p>`;
       return;
     }
 
     const strengthsHtml = (feedback.key_strengths || [])
       .map(
         (s) => `
-        <li class="flex items-start gap-3 p-3.5 rounded-xl bg-success-dim border border-success-border">
-          <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-[11px] shrink-0 mt-0.5">&check;</span>
-          <span class="text-zinc-200 text-[13px] leading-relaxed">${escapeHtml(s)}</span>
+        <li class="flex items-start gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+          <span class="w-5 h-5 rounded-md bg-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">&check;</span>
+          <span class="text-emerald-950 text-xs sm:text-sm leading-relaxed">${escapeHtml(s)}</span>
         </li>`
       )
       .join("");
@@ -437,29 +440,35 @@
     const gapsHtml = (feedback.learning_gaps || [])
       .map(
         (g, idx) => `
-        <div class="card-inner rounded-xl overflow-hidden">
-          <div class="px-5 py-3 bg-surface-3 border-b border-edge flex items-center gap-2.5">
-            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border">
+        <div class="card-surface rounded-2xl overflow-hidden border border-[#EAE3D9] shadow-sm">
+          <div class="px-5 py-3 bg-cream-100/80 border-b border-[#EAE3D9] flex items-center gap-2.5">
+            <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200">
               GAP 0${idx + 1}
             </span>
-            <h5 class="text-[14px] font-semibold text-white">${escapeHtml(
+            <h5 class="text-base font-bold text-warmstone-900">${escapeHtml(
               g.concept_or_skill
             )}</h5>
           </div>
-          <div class="p-5 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[12px]">
-              <div class="bg-danger-dim p-3.5 rounded-xl border border-danger-border">
-                <div class="label text-rose-300 mb-1">Observed Flaw</div>
-                <p class="text-zinc-200 leading-relaxed">${escapeHtml(g.observed_issue)}</p>
+          <div class="p-5 space-y-4 bg-white">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+              <div class="bg-rose-50 p-3.5 rounded-xl border border-rose-200">
+                <div class="font-mono text-[10px] uppercase tracking-wider font-bold text-rose-800 mb-1">
+                  Observed Flaw
+                </div>
+                <p class="text-rose-950 leading-relaxed font-medium">${escapeHtml(g.observed_issue)}</p>
               </div>
-              <div class="bg-success-dim p-3.5 rounded-xl border border-success-border">
-                <div class="label text-emerald-300 mb-1">Actionable Fix</div>
-                <p class="text-zinc-200 leading-relaxed">${escapeHtml(g.actionable_fix)}</p>
+              <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                <div class="font-mono text-[10px] uppercase tracking-wider font-bold text-emerald-800 mb-1">
+                  Actionable Fix
+                </div>
+                <p class="text-emerald-950 leading-relaxed font-medium">${escapeHtml(g.actionable_fix)}</p>
               </div>
             </div>
             <div class="space-y-1.5">
-              <div class="label">Exemplar Pattern / Code Hint</div>
-              <pre class="bg-surface-0 text-violet-200 font-mono text-[12px] p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-edge">${escapeHtml(
+              <div class="font-mono text-[10px] uppercase tracking-wider text-warmstone-500 font-bold">
+                Exemplar Pattern / Code Hint
+              </div>
+              <pre class="bg-cream-100 text-warmstone-900 font-mono text-xs p-4 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#EAE3D9]">${escapeHtml(
                 g.example_or_hint
               )}</pre>
             </div>
@@ -472,11 +481,11 @@
     const roadmapHtml = (feedback.revision_roadmap || [])
       .map(
         (step, idx) =>
-          `<li class="flex items-start gap-3 p-3.5 rounded-xl bg-surface-2 border border-edge">
-            <span class="font-mono font-bold text-[11px] w-5 h-5 rounded-md bg-violet-600 text-white flex items-center justify-center shrink-0 mt-0.5">${
+          `<li class="flex items-start gap-3 p-3.5 rounded-xl bg-cream-50 border border-[#EAE3D9]">
+            <span class="font-mono font-bold text-xs w-6 h-6 rounded-md bg-orange-600 text-white flex items-center justify-center shrink-0">${
               idx + 1
             }</span>
-            <span class="text-[13px] text-zinc-200 leading-relaxed">${escapeHtml(
+            <span class="text-xs sm:text-sm text-warmstone-800 leading-relaxed pt-0.5 font-medium">${escapeHtml(
               step
             )}</span>
           </li>`
@@ -485,34 +494,42 @@
 
     panel.innerHTML = `
       <div class="space-y-6 animate-enter">
-        <div class="rounded-xl p-5 bg-accent-dim border border-accent-border space-y-1.5">
-          <div class="label text-violet-300">Executive Synthesis</div>
-          <p class="text-white text-[14px] leading-relaxed">${escapeHtml(
+        <div class="rounded-2xl p-5 bg-orange-50 border border-orange-200 space-y-1.5">
+          <div class="text-[11px] font-mono font-bold uppercase tracking-widest text-orange-800">
+            Executive Synthesis
+          </div>
+          <p class="text-warmstone-900 text-sm leading-relaxed font-medium">${escapeHtml(
             feedback.executive_summary
           )}</p>
         </div>
 
-        <div class="space-y-3">
-          <h4 class="text-[15px] font-semibold text-white">Demonstrated Strengths</h4>
-          <ul class="grid grid-cols-1 gap-2">${
-            strengthsHtml || "<li class='text-[12px] text-zinc-500'>None noted.</li>"
+        <div class="space-y-2.5">
+          <h4 class="text-base font-bold text-warmstone-900">
+            Demonstrated Strengths
+          </h4>
+          <ul class="grid grid-cols-1 gap-2.5">${
+            strengthsHtml || "<li class='text-xs text-warmstone-500'>None noted.</li>"
           }</ul>
         </div>
 
         <div class="space-y-3">
-          <h4 class="text-[15px] font-semibold text-white">Actionable Learning Gaps &amp; Coaching</h4>
-          <div class="space-y-3">${
+          <h4 class="text-base font-bold text-warmstone-900">
+            Actionable Learning Gaps &amp; Coaching
+          </h4>
+          <div class="space-y-4">${
             gapsHtml ||
-            "<p class='text-[12px] text-zinc-500'>No major learning gaps identified.</p>"
+            "<p class='text-xs text-warmstone-500'>No major learning gaps identified.</p>"
           }</div>
         </div>
 
-        <div class="space-y-3">
-          <h4 class="text-[15px] font-semibold text-white">Priority Revision Roadmap</h4>
+        <div class="space-y-2.5">
+          <h4 class="text-base font-bold text-warmstone-900">
+            Priority Revision Roadmap
+          </h4>
           <ol class="space-y-2">${roadmapHtml}</ol>
         </div>
 
-        <blockquote class="border-l-2 border-emerald-400 bg-success-dim px-4 py-3 text-emerald-200 text-[13px] italic rounded-r-xl">
+        <blockquote class="border-l-4 border-orange-500 bg-orange-50 px-5 py-3.5 text-orange-950 text-sm italic rounded-r-xl font-medium">
           &ldquo;${escapeHtml(feedback.encouraging_closing)}&rdquo;
         </blockquote>
       </div>
@@ -524,7 +541,7 @@
     const panel = el("tab-panel-criteria");
     if (!panel) return;
     if (!initialEval || !Array.isArray(initialEval.criterion_evaluations)) {
-      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No criterion evaluations available.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No criterion evaluations available.</p>`;
       return;
     }
 
@@ -546,7 +563,7 @@
         const quotesHtml = (ce.student_evidence_quotes || [])
           .map(
             (q) =>
-              `<pre class="bg-surface-0 text-amber-300 font-mono text-[11px] p-3 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed border border-edge">${escapeHtml(
+              `<pre class="bg-cream-100 text-warmstone-900 font-mono text-xs p-3.5 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-[#EAE3D9]">${escapeHtml(
                 q
               )}</pre>`
           )
@@ -561,62 +578,64 @@
           .join("");
 
         return `
-        <div class="card-inner rounded-xl overflow-hidden">
-          <div class="px-5 py-3.5 bg-surface-3 border-b border-edge flex flex-wrap items-center justify-between gap-3">
+        <div class="card-surface rounded-2xl overflow-hidden border border-[#EAE3D9] shadow-sm">
+          <div class="px-5 py-3.5 bg-cream-100/80 border-b border-[#EAE3D9] flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
-              <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-accent-dim text-violet-300 border border-accent-border">${escapeHtml(
+              <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200">${escapeHtml(
                 ce.criterion_id
               )}</span>
-              <h5 class="text-[14px] font-semibold text-white">${escapeHtml(
+              <h5 class="text-base font-bold text-warmstone-900">${escapeHtml(
                 ce.criterion_title
               )}</h5>
             </div>
-            <div class="flex items-center gap-2 font-mono text-[11px] tabular-nums">
-              <span class="px-2.5 py-1 rounded-md bg-surface-1 border border-edge text-zinc-400">Init: ${Number(
+            <div class="flex items-center gap-2 font-mono text-xs tabular-nums">
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-[#EAE3D9] text-warmstone-600 font-medium">Init: ${Number(
                 ce.initial_score
               ).toFixed(1)}</span>
-              <span class="text-zinc-600">&rarr;</span>
-              <span class="px-2.5 py-1 rounded-md bg-violet-600 text-white font-bold">Final: ${Number(
+              <span class="text-warmstone-400">&rarr;</span>
+              <span class="px-3 py-1 rounded-lg bg-orange-600 text-white font-bold">Final: ${Number(
                 finalScore
               ).toFixed(1)} / ${Number(ce.max_points).toFixed(1)}</span>
-              <span class="px-2 py-0.5 rounded-md bg-success-dim text-emerald-300 border border-success-border text-[10px] uppercase">${escapeHtml(
+              <span class="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] uppercase font-bold">${escapeHtml(
                 verdict
               )}</span>
             </div>
           </div>
 
-          <div class="p-5 space-y-4">
-            <div class="w-full h-1 bg-surface-0 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-violet-500 to-teal-400 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
+          <div class="p-5 space-y-4 bg-white">
+            <div class="w-full h-2 bg-cream-200 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: ${pct.toFixed(
                 1
               )}%"></div>
             </div>
 
-            <p class="text-zinc-300 text-[13px] leading-relaxed"><strong class="text-white">Rationale:</strong> ${escapeHtml(
+            <p class="text-warmstone-700 text-xs sm:text-sm leading-relaxed"><strong class="text-warmstone-900">Rationale:</strong> ${escapeHtml(
               ce.rationale
             )}</p>
 
-            <div class="bg-surface-0 border-l-2 border-teal-400 p-3.5 rounded-r-xl border border-edge space-y-1.5">
-              <div class="label text-teal-400">Chain-of-Thought Trace</div>
-              <p class="text-zinc-300 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${escapeHtml(
+            <div class="bg-cream-50 border-l-4 border-orange-500 p-4 rounded-r-xl border border-[#EAE3D9] space-y-1.5">
+              <div class="text-[10px] font-mono font-bold uppercase tracking-widest text-orange-800">
+                Chain-of-Thought Verification Trace
+              </div>
+              <p class="text-warmstone-800 font-mono text-xs whitespace-pre-wrap leading-relaxed">${escapeHtml(
                 ce.chain_of_thought_trace
               )}</p>
             </div>
 
             ${
               quotesHtml
-                ? `<div class="space-y-1.5"><div class="label">Verbatim Evidence</div>${quotesHtml}</div>`
+                ? `<div class="space-y-1.5"><div class="text-[10px] font-mono font-bold uppercase tracking-wider text-warmstone-500">Verbatim Student Evidence</div>${quotesHtml}</div>`
                 : ""
             }
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12px]">
-              <div class="bg-success-dim border border-success-border rounded-xl p-3.5">
-                <div class="label text-emerald-300 mb-1">Strengths Observed</div>
-                <ul class="text-zinc-300 space-y-1">${strengthsHtml || "<li>None noted</li>"}</ul>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+                <div class="text-[10px] font-mono font-bold uppercase text-emerald-800 mb-1">Strengths Observed</div>
+                <ul class="text-emerald-950 space-y-1 font-medium">${strengthsHtml || "<li>None noted</li>"}</ul>
               </div>
-              <div class="bg-danger-dim border border-danger-border rounded-xl p-3.5">
-                <div class="label text-rose-300 mb-1">Flaws / Gaps Observed</div>
-                <ul class="text-zinc-300 space-y-1">${flawsHtml || "<li>None noted</li>"}</ul>
+              <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5">
+                <div class="text-[10px] font-mono font-bold uppercase text-rose-800 mb-1">Flaws / Gaps Observed</div>
+                <ul class="text-rose-950 space-y-1 font-medium">${flawsHtml || "<li>None noted</li>"}</ul>
               </div>
             </div>
           </div>
@@ -627,11 +646,11 @@
 
     panel.innerHTML = `
       <div class="space-y-4 animate-enter">
-        <div class="card-inner rounded-xl p-4 text-[13px] leading-relaxed">
-          <span class="label text-teal-400 block mb-1">
+        <div class="card-surface rounded-2xl p-4 text-xs sm:text-sm leading-relaxed border border-[#EAE3D9] bg-cream-50">
+          <span class="font-mono uppercase text-[10px] tracking-widest text-orange-700 font-bold block mb-1">
             Overall Comprehension Summary (${escapeHtml(initialEval.submission_modality)})
           </span>
-          <span class="text-zinc-200">${escapeHtml(
+          <span class="text-warmstone-800 font-medium">${escapeHtml(
             initialEval.overall_comprehension_summary
           )}</span>
         </div>
@@ -645,14 +664,14 @@
     const panel = el("tab-panel-reflection");
     if (!panel) return;
     if (!reflectionAudit) {
-      panel.innerHTML = `<p class="text-zinc-500 text-center py-12 text-[12px]">No reflection audit log available.</p>`;
+      panel.innerHTML = `<p class="text-warmstone-500 text-center py-12 text-xs">No reflection audit log available.</p>`;
       return;
     }
 
     const checksHtml = (reflectionAudit.bias_checks_performed || [])
       .map(
         (c) =>
-          `<li class="flex items-center gap-2 text-[12px] text-zinc-300 bg-surface-2 px-3 py-2 rounded-lg border border-edge"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span><span>${escapeHtml(
+          `<li class="flex items-center gap-2 text-xs text-warmstone-800 bg-cream-50 px-3.5 py-2.5 rounded-xl border border-[#EAE3D9] font-medium"><span class="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span><span>${escapeHtml(
             c
           )}</span></li>`
       )
@@ -661,22 +680,22 @@
     const rowsHtml = (reflectionAudit.criterion_audits || [])
       .map(
         (ca) => `
-        <tr class="border-t border-edge hover:bg-white/[0.02] text-[12px]">
-          <td class="py-3 px-3 font-mono font-bold text-white">${escapeHtml(ca.criterion_id)}</td>
-          <td class="py-3 px-3 font-mono text-zinc-300 tabular-nums">${Number(
+        <tr class="border-t border-[#EAE3D9] hover:bg-cream-50 text-xs">
+          <td class="py-3 px-3 font-mono font-bold text-warmstone-900">${escapeHtml(ca.criterion_id)}</td>
+          <td class="py-3 px-3 font-mono text-warmstone-600 tabular-nums">${Number(
             ca.initial_score
           ).toFixed(1)}</td>
-          <td class="py-3 px-3 font-mono font-bold text-violet-300 tabular-nums">${Number(
+          <td class="py-3 px-3 font-mono font-bold text-orange-700 tabular-nums">${Number(
             ca.calibrated_score
           ).toFixed(1)}</td>
-          <td class="py-3 px-3 font-mono font-semibold text-amber-300 tabular-nums">${escapeHtml(
+          <td class="py-3 px-3 font-mono font-bold text-amber-700 tabular-nums">${escapeHtml(
             formatDelta(ca.adjustment_delta)
           )}</td>
-          <td class="py-3 px-3"><span class="font-mono text-[10px] px-2 py-0.5 rounded bg-surface-0 border border-edge text-zinc-400">${escapeHtml(
+          <td class="py-3 px-3"><span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-cream-100 border border-[#DDD4C7] text-warmstone-700">${escapeHtml(
             ca.audit_verdict
           )}</span></td>
-          <td class="py-3 px-3 text-zinc-300">${escapeHtml(ca.bias_or_error_detected)}</td>
-          <td class="py-3 px-3 text-zinc-400">${escapeHtml(ca.calibration_reasoning)}</td>
+          <td class="py-3 px-3 text-warmstone-800">${escapeHtml(ca.bias_or_error_detected)}</td>
+          <td class="py-3 px-3 text-warmstone-600">${escapeHtml(ca.calibration_reasoning)}</td>
         </tr>
       `
       )
@@ -684,34 +703,36 @@
 
     panel.innerHTML = `
       <div class="space-y-5 animate-enter">
-        <div class="card-inner rounded-xl p-5 space-y-2">
+        <div class="card-surface rounded-2xl p-5 space-y-2 border border-[#EAE3D9] bg-white">
           <div class="flex items-center justify-between">
-            <span class="text-[15px] font-semibold text-white">Meta-Evaluator Audit Verdict</span>
-            <span class="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-warn-dim text-amber-300 border border-warn-border uppercase">${escapeHtml(
+            <span class="text-base font-bold text-warmstone-900">Meta-Evaluator Audit Verdict</span>
+            <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-orange-100 text-orange-800 border border-orange-200 uppercase">${escapeHtml(
               reflectionAudit.audit_status
             )}</span>
           </div>
-          <p class="text-[13px] text-zinc-300 leading-relaxed">${escapeHtml(
+          <p class="text-xs sm:text-sm text-warmstone-700 leading-relaxed font-medium">${escapeHtml(
             reflectionAudit.overall_audit_summary
           )}</p>
         </div>
 
         <div class="space-y-2.5">
-          <h4 class="label">Bias &amp; Calibration Checks Executed</h4>
+          <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-warmstone-500">
+            Bias &amp; Calibration Checks Executed
+          </h4>
           <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">${checksHtml}</ul>
         </div>
 
-        <div class="overflow-x-auto border border-edge rounded-xl bg-surface-0">
+        <div class="overflow-x-auto border border-[#EAE3D9] rounded-2xl bg-white shadow-sm">
           <table class="w-full text-left border-collapse">
-            <thead class="bg-surface-2 text-zinc-400 font-mono text-[10px] uppercase tracking-wider">
+            <thead class="bg-cream-100 text-warmstone-700 font-mono text-[10px] uppercase tracking-wider font-bold">
               <tr>
-                <th class="py-2.5 px-3">ID</th>
-                <th class="py-2.5 px-3">Initial</th>
-                <th class="py-2.5 px-3">Calibrated</th>
-                <th class="py-2.5 px-3">Delta</th>
-                <th class="py-2.5 px-3">Verdict</th>
-                <th class="py-2.5 px-3">Bias / Error Check</th>
-                <th class="py-2.5 px-3">Calibration Reasoning</th>
+                <th class="py-3 px-3">ID</th>
+                <th class="py-3 px-3">Initial</th>
+                <th class="py-3 px-3">Calibrated</th>
+                <th class="py-3 px-3">Delta</th>
+                <th class="py-3 px-3">Verdict</th>
+                <th class="py-3 px-3">Bias / Error Check</th>
+                <th class="py-3 px-3">Calibration Reasoning</th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -769,6 +790,9 @@
     renderCriteriaTab(record.initial_evaluation, record.reflection_audit);
     renderReflectionTab(record.reflection_audit);
     updateExportLinks(record.id);
+
+    // Show indicator on report tab
+    el("report-ready-indicator")?.classList.remove("hidden");
   }
 
   async function fetchHealth() {
@@ -850,10 +874,10 @@
       return;
     }
     state.userEditedSubmission = false;
-    el("student-name-input").value = sample.student_name || "Sample Student";
-    el("student-id-input").value = sample.student_id || "STU-1001";
+    el("student-name-input").value = sample.student_name || "Alex Rivera";
+    el("student-id-input").value = sample.student_id || "STU-2049";
     el("submission-filename-input").value =
-      sample.submission_filename || "sample_submission.py";
+      sample.submission_filename || "submission.py";
     el("submission-text-input").value = sample.submission_text || "";
     state.submissionPdfBase64 = null;
     const badge = el("ingested-file-badge");
@@ -861,7 +885,6 @@
       badge.textContent = `Sample: ${sample.submission_filename}`;
       badge.classList.remove("hidden");
     }
-    switchLeftPane("editor");
     showBanner(`Loaded sample work for ${sample.student_name}. Click "Run 4-Agent Evaluation" to grade.`);
   }
 
@@ -903,6 +926,7 @@
       }
     }
     renderFullEvaluationRecord(record);
+    switchFlow("report");
   }
 
   async function ingestFileToTarget(file, onLoaded) {
@@ -938,6 +962,8 @@
     const runBtn = el("run-eval-btn");
     runBtn.disabled = true;
 
+    // Immediately transition into the report / live progress view
+    switchFlow("report");
     resetPipelineStepper("Streaming 4-Agent Pipeline...");
     state.livePartial = { rubric: null, initialEval: null, reflection: null, feedback: null };
 
@@ -999,7 +1025,7 @@
       if (overall) {
         overall.textContent = "Pipeline Error";
         overall.className =
-          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-red-500/20 text-rose-300 border border-red-500/40";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
       }
     } finally {
       runBtn.disabled = false;
@@ -1013,7 +1039,7 @@
       if (overall) {
         overall.textContent = `Active: ${data.label || data.agent}`;
         overall.className =
-          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-300 border border-violet-500/40";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-orange-100 text-orange-800 border border-orange-300";
       }
       return;
     }
@@ -1049,7 +1075,7 @@
       if (overall) {
         overall.textContent = `Completed in ${data.duration_ms} ms`;
         overall.className =
-          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tabular-nums";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 tabular-nums";
       }
       renderFullEvaluationRecord(data);
       return;
@@ -1061,7 +1087,7 @@
       if (overall) {
         overall.textContent = "Error";
         overall.className =
-          "text-[11px] font-mono font-semibold px-3 py-1.5 rounded-lg bg-red-500/20 text-rose-300 border border-red-500/40";
+          "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
       }
     }
   }
@@ -1081,8 +1107,8 @@
         buttons.forEach((b) => {
           const active = b.getAttribute("data-tab") === target;
           b.className = active
-            ? "report-tab-btn px-3.5 py-1.5 text-[12px] font-semibold rounded-lg tab-active border transition-all"
-            : "report-tab-btn px-3.5 py-1.5 text-[12px] font-medium rounded-lg text-zinc-500 hover:text-zinc-300 border border-transparent hover:bg-surface-3 transition-all";
+            ? "report-tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 text-white shadow-sm transition-all"
+            : "report-tab-btn px-4 py-2 text-xs font-semibold rounded-xl text-warmstone-600 hover:text-warmstone-900 hover:bg-cream-200 transition-all";
         });
         Object.entries(panels).forEach(([key, panel]) => {
           if (!panel) return;
@@ -1098,8 +1124,19 @@
   }
 
   function setupEventListeners() {
-    el("left-tab-editor-btn")?.addEventListener("click", () => switchLeftPane("editor"));
-    el("left-tab-spec-btn")?.addEventListener("click", () => switchLeftPane("spec"));
+    // Flow view tabs
+    el("flow-tab-setup-btn")?.addEventListener("click", () => switchFlow("setup"));
+    el("flow-tab-report-btn")?.addEventListener("click", () => switchFlow("report"));
+    el("back-to-setup-btn")?.addEventListener("click", () => switchFlow("setup"));
+
+    // Spec inspector toggle
+    el("inspect-rubric-toggle-btn")?.addEventListener("click", () => {
+      const spec = el("left-pane-spec");
+      if (spec) spec.classList.toggle("hidden");
+    });
+    el("close-spec-view-btn")?.addEventListener("click", () => {
+      el("left-pane-spec")?.classList.add("hidden");
+    });
 
     el("status-banner-close")?.addEventListener("click", hideBanner);
     el("seed-btn")?.addEventListener("click", seedAssignments);
@@ -1144,14 +1181,14 @@
     dropzone?.addEventListener("click", () => fileInput?.click());
     dropzone?.addEventListener("dragover", (e) => {
       e.preventDefault();
-      dropzone.classList.add("border-violet-500/40", "bg-accent-dim");
+      dropzone.classList.add("border-orange-500", "bg-orange-50");
     });
     dropzone?.addEventListener("dragleave", () => {
-      dropzone.classList.remove("border-violet-500/40", "bg-accent-dim");
+      dropzone.classList.remove("border-orange-500", "bg-orange-50");
     });
     dropzone?.addEventListener("drop", (e) => {
       e.preventDefault();
-      dropzone.classList.remove("border-violet-500/40", "bg-accent-dim");
+      dropzone.classList.remove("border-orange-500", "bg-orange-50");
       const file = e.dataTransfer?.files?.[0];
       if (file) handleStudentFileUpload(file);
     });
@@ -1185,7 +1222,7 @@
         showBanner("Structured rubric parsed and saved.");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Parse / Refresh";
+        btn.textContent = "Parse / Refresh Rubric";
       }
     });
 
