@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" class="w-8 h-8">
+  <!-- Minimalist Geometric Prism / Academic Crest (Transparent Background) -->
+  <path d="M18 3.5L30.5 10.5V21.5L18 32.5L5.5 21.5V10.5L18 3.5Z" stroke="#0284C7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Core Internal Facets -->
+  <path d="M18 3.5V32.5" stroke="#0284C7" stroke-width="1.2" stroke-opacity="0.3" stroke-dasharray="2 2"/>
+  <path d="M5.5 10.5L18 18L30.5 10.5" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M5.5 21.5L18 18L30.5 21.5" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Center Neural Spark Node -->
+  <circle cx="18" cy="18" r="2.2" fill="#0284C7"/>
+  <circle cx="18" cy="18" r="4.5" stroke="#38BDF8" stroke-width="1.2" stroke-opacity="0.5"/>
+</svg>

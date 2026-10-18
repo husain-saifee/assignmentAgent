@@ -1,0 +1,881 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AETHER ACADEMIC EVALUATION STUDIO · DESIGN SYSTEM
+   Standard: Conversion-First Web Design & Anti-AI-Slop Protocol
+   Palette: Soft Modern Porcelain & Nordic Ocean Teal / Cobalt
+     - 60% Dominant Canvas: Warm Porcelain (#F8F9FA) with tactile dot-grid texture
+     - 30% Structural Surfaces: Crisp White Cards (#FFFFFF) & Slate Elevation (#F8FAFC)
+     - 10% Sole Action Accent: Nordic Ocean Cobalt (#0284C7) strictly for CTAs & active states
+   Typography:
+     - Headings (H1/H2): Space Grotesk (Alternating Regular & Bold for Dynamic Impact)
+     - Body: Plus Jakarta Sans (Proportional UI Sans in Soft Graphite #1E293B, NO harsh black)
+     - Technical / Code: JetBrains Mono (Tabular numerals, code & badges only)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* 60% Dominant Neutral Canvas (Warm Porcelain) */;
+  --bg-canvas: #F8F9FA;
+  --bg-canvas-subtle: #F1F3F5;
+
+  /* Apple Translucent Materials (Glassmorphism & Depth) */;
+  --glass-header: rgba(248, 249, 250, 0.78);
+  --glass-surface: rgba(255, 255, 255, 0.88);
+  --glass-elevated: rgba(248, 250, 252, 0.92);
+  --glass-border: rgba(226, 232, 240, 0.75);
+  --glass-border-light: rgba(255, 255, 255, 0.85); /* Light-catch edge */
+  --glass-blur-heavy: 20px;
+  --glass-blur-medium: 12px;
+
+  /* 30% Secondary Structural Surfaces */;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #F8FAFC;
+  --bg-surface-muted: #F1F5F9;
+  --border-subtle: #E2E8F0;
+  --border-medium: #CBD5E1;
+  --border-focus: #0284C7;
+
+  /* Soft Graphite & Slate-Blue Typography (NO HARSH BLACK) */;
+  --text-primary: #1E293B;      /* Soft Deep Slate · 12.8:1 on Canvas */
+  --text-secondary: #475569;    /* Refined Slate Grey · 7.5:1 on Canvas */
+  --text-muted: #64748B;        /* Muted Slate · 4.8:1 on Canvas */
+  --text-subtle: #94A3B8;
+
+  /* 10% High-Contrast Action Accent (Nordic Ocean Cobalt / Teal) */;
+  --accent-primary: #0284C7;    /* Nordic Ocean Cobalt */
+  --accent-primary-hover: #0369A1;
+  --accent-primary-active: #075985;
+  --accent-contrast-text: #FFFFFF;
+  --accent-surface: #F0F9FF;
+  --accent-border: #BAE6FD;
+  --accent-glow: rgba(2, 132, 199, 0.16);
+  --accent-glow-strong: rgba(2, 132, 199, 0.28);
+
+  /* Semantic Feedback Tokens */;
+  --emerald-bg: #ECFDF5;
+  --emerald-border: #A7F3D0;
+  --emerald-text: #065F46;
+  --amber-bg: #FFFBEB;
+  --amber-border: #FDE68A;
+  --amber-text: #92400E;
+  --rose-bg: #FEF2F2;
+  --rose-border: #FECACA;
+  --rose-text: #991B1B;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CALIBRATED SPRING PHYSICS & TACTILE TOKENS (Emil Kowalski & Apple WWDC)
+     Damping: 1.0 (Critically Damped, zero oscillation overshoot)
+     Response: 0.35s (350ms settling duration)
+     ═══════════════════════════════════════════════════════════════════════════ */;
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-snappy-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-natural-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Emil Kowalski Asymmetric Tactile Durations */;
+  --duration-tactile-down: 35ms;  /* Instant response on pointer-down (0–40ms envelope) */
+  --duration-tactile-up: 140ms;   /* Spring recoil recovery on release */
+  --duration-instant: 40ms;       /* Instant feedback token */
+  --duration-fast: 160ms;        /* Micro-interactions, icons, tooltips */
+  --duration-medium: 260ms;      /* Sliding tab indicator, accordion expand */
+  --duration-modal: 350ms;       /* Drawer slide-over & modal scale spring */
+  --duration-settle: 420ms;      /* Full layout settle */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE & RESET WITH TACTILE BACKGROUND TEXTURE
+   ═══════════════════════════════════════════════════════════════════════════ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  background-color: var(--bg-canvas);
+}
+
+body {
+  background-color: var(--bg-canvas);
+  /* Precision Tactile Dot-Grid Texture + Ambient Radial Glow */
+  background-image:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(2, 132, 199, 0.05), transparent 70%),
+    radial-gradient(circle, rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+  background-position: 0 0, 0 0;
+  color: var(--text-primary);
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Text Selection */
+::selection {
+  background-color: #BAE6FD;
+  color: #0369A1;
+}
+
+/* High-contrast Form Input Reset */
+::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+input, textarea, select {
+  color: var(--text-primary) !important;
+  font-family: inherit;
+}
+
+/* Custom Styled Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+  border: 2px solid var(--bg-canvas);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY HIERARCHY (Space Grotesk Display + Dynamic Weight Contrast)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.font-display {
+  font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+.hero-headline {
+  font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(2.5rem, 5vw + 1rem, 4.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: var(--text-primary);
+}
+
+.section-headline {
+  font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.125rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+.prose-subhead {
+  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 58ch;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHADCN-INSPIRED STRUCTURAL SURFACES & BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 30% Structural Surfaces with Apple Translucency & Elevation */
+.card-surface, [data-slot="card"] {
+  background-color: var(--glass-surface);
+  backdrop-filter: blur(var(--glass-blur-medium)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-medium)) saturate(160%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.02);
+  transition: border-color var(--duration-fast) var(--ease-spring),
+              box-shadow var(--duration-medium) var(--ease-spring);
+}
+
+.card-inner, [data-slot="card-inner"] {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+
+/* Translucent Apple Sticky Chrome */
+.glass-nav-header {
+  background-color: var(--glass-header);
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TACTILE BUTTONS & CARDS WITH INSTANT SPRING RECOIL (Emil Kowalski §3.1)
+   - Zero input latency: 35ms down, 140ms release
+   - Zero layout thrashing: strictly transform & opacity
+   - Hardware touch acceleration: touch-action manipulation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Universal Tactile Button Base */
+.btn,
+[data-slot="button"],
+.report-tab-btn,
+#flow-tab-setup-btn,
+#flow-tab-report-btn,
+#status-banner-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: 12px;
+  /* Release: 140ms spring recovery back to rest */
+  transition: transform var(--duration-tactile-up) var(--ease-spring),
+              box-shadow var(--duration-tactile-up) ease,
+              background-color 150ms ease,
+              border-color 150ms ease,
+              color 150ms ease !important;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+/* Hover state: Gated for fine pointer devices to prevent mobile sticky hover */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled),
+  [data-slot="button"]:hover:not(:disabled),
+  #status-banner-close:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Instant Direct Touch-Down Feedback (Scale 0.975 + 1px Sink) */
+.btn:active:not(:disabled),
+[data-slot="button"]:active:not(:disabled),
+.report-tab-btn:active,
+#flow-tab-setup-btn:active,
+#flow-tab-report-btn:active,
+#status-banner-close:active {
+  transform: scale(0.975) translateY(1px) !important;
+  /* Down: Instant 35ms tactile compression */
+  transition: transform var(--duration-tactile-down) var(--ease-spring) !important;
+}
+
+.btn:disabled,
+[data-slot="button"]:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
+.btn:focus-visible,
+[data-slot="button"]:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Benchmark Assignment Pill & Evaluation History Row Physical Feedback */
+.assign-card-item,
+.eval-history-row {
+  transition: transform var(--duration-tactile-up) var(--ease-spring),
+              box-shadow var(--duration-tactile-up) ease,
+              border-color var(--duration-fast) ease,
+              background-color var(--duration-fast) ease !important;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .assign-card-item:hover,
+  .eval-history-row:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.assign-card-item:active,
+.eval-history-row:active {
+  transform: scale(0.98) translateY(1px) !important;
+  transition: transform var(--duration-tactile-down) var(--ease-spring) !important;
+}
+
+/* Student Submission Dropzone Physical Feedback */
+#submission-dropzone {
+  transition: transform var(--duration-tactile-up) var(--ease-spring),
+              border-color var(--duration-fast) ease,
+              background-color var(--duration-fast) ease,
+              box-shadow var(--duration-fast) ease !important;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #submission-dropzone:hover {
+    transform: translateY(-1px);
+  }
+}
+
+#submission-dropzone:active {
+  transform: scale(0.985) translateY(1px) !important;
+  transition: transform var(--duration-tactile-down) var(--ease-spring) !important;
+}
+
+#submission-dropzone.dragover,
+#submission-dropzone.drop-active {
+  border-color: var(--accent-primary) !important;
+  background-color: var(--accent-surface) !important;
+  transform: scale(1.008);
+}
+
+/* 10% High-Contrast Solid Action Button (Anti-Ghost Rule) */
+.btn-primary, .btn-action {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-contrast-text) !important;
+  box-shadow: 0 4px 14px 0 var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--accent-primary-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled), .btn-action:hover:not(:disabled) {
+    background-color: var(--accent-primary-hover) !important;
+    box-shadow: 0 6px 20px 0 var(--accent-glow-strong), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-primary:active:not(:disabled), .btn-action:active:not(:disabled) {
+  background-color: var(--accent-primary-active) !important;
+  box-shadow: 0 2px 8px 0 rgba(2, 132, 199, 0.2) !important;
+  transform: scale(0.975) translateY(1px) !important;
+  transition: transform var(--duration-tactile-down) var(--ease-spring) !important;
+}
+
+/* Secondary Action Button (Neutral Structural Surface) */
+.btn-secondary {
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-surface-elevated);
+    border-color: var(--border-medium);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-secondary:active:not(:disabled) {
+  background-color: var(--bg-surface-elevated) !important;
+  transform: scale(0.975) translateY(1px) !important;
+  transition: transform var(--duration-tactile-down) var(--ease-spring) !important;
+}
+
+/* Form Controls */
+.input-clean, [data-slot="input"] {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 10px 14px;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  outline: none;
+}
+
+.input-clean:focus, [data-slot="input"]:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMIL KOWALSKI SKELETON SHIMMER SWEEP ENGINE (R4)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #E2E8F0;
+  border-radius: 0.375rem;
+  will-change: transform;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 100%
+  );
+  animation: shimmerSweep 1.8s infinite cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4-AGENT PIPELINE STEPPER & GPU-COMPOSITED BREATHING GLOW (R2, R5)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Constant 1px border on stage cards prevents 1px layout jitter/box-shift */
+.stage-card {
+  border-width: 1px !important;
+  transition: background-color var(--duration-medium) var(--ease-spring),
+              border-color var(--duration-medium) var(--ease-spring),
+              box-shadow var(--duration-medium) var(--ease-spring);
+  position: relative;
+}
+
+@keyframes nodeBreathingGlow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.015);
+  }
+}
+
+.node-running {
+  position: relative;
+  overflow: visible !important;
+  background-color: #F0F9FF !important;
+  border-color: var(--accent-primary) !important;
+  border-width: 1px !important;
+}
+
+/* GPU-accelerated breathing glow layer (zero main-thread repaints) */
+.node-running::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.22), 0 4px 16px rgba(2, 132, 199, 0.18);
+  animation: nodeBreathingGlow 2.4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+.node-complete {
+  background-color: #F0FDF4 !important;
+  border-color: #34D399 !important;
+  border-width: 1px !important;
+}
+
+.node-error {
+  background-color: #FEF2F2 !important;
+  border-color: #F87171 !important;
+  border-width: 1px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CALIBRATED SVG CHECKMARK & STAGE BADGE POP-IN (R2)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes drawCheckPath {
+  0% {
+    stroke-dashoffset: 24; /* terminal: 0 */
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.svg-check-anim {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24; /* Prevents visual flash prior to animation start */
+  animation: drawCheckPath 320ms var(--ease-spring) forwards;
+}
+
+@keyframes badgePopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.stage-badge-complete,
+.badge-pop-in {
+  animation: badgePopIn 240ms var(--ease-spring) forwards;
+  will-change: transform, opacity;
+}
+
+/* Circular Score Gauge */
+.score-ring-circle {
+  transition: stroke-dashoffset 900ms var(--ease-spring), stroke 400ms ease;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* GPU-Accelerated Live Pipeline Progress Bar (Zero Layout Thrashing) */
+#evaluation-progress-fill,
+#live-pipeline-progress-bar {
+  transform-origin: left center;
+  will-change: transform;
+  transition: transform 260ms var(--ease-spring);
+}
+
+/* Smooth Element Entrance Animation */
+@keyframes revealFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-enter {
+  animation: revealFadeUp var(--duration-medium) var(--ease-spring) forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SLIDING ACTIVE PILL INDICATOR ENGINE (Emil Kowalski §3.2 Layout Physics)
+   Hardware-accelerated continuous sliding pill for tab & stepper navigation
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sliding-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, width;
+  transition: transform var(--duration-medium) var(--ease-spring),
+              width var(--duration-medium) var(--ease-spring),
+              height var(--duration-medium) var(--ease-spring),
+              opacity 150ms ease;
+  border-radius: 0.5rem;
+  background-color: var(--accent-primary, #0284C7);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+#flow-sliding-pill {
+  z-index: 0;
+}
+
+#report-tab-indicator {
+  border-radius: 0.75rem;
+  z-index: 1;
+}
+
+#report-tab-bar {
+  position: relative;
+}
+
+.report-tab-btn {
+  position: relative;
+  z-index: 2;
+  background-color: transparent;
+}
+
+.report-tab-btn[aria-selected="true"] {
+  background-color: transparent !important;
+}
+
+.report-tab-btn:hover:not([aria-selected="true"]) {
+  background-color: rgba(255, 255, 255, 0.65);
+}
+
+.flow-nav-btn {
+  position: relative;
+  z-index: 10;
+  background-color: transparent !important;
+}
+
+.flow-nav-btn.active {
+  color: #FFFFFF !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CRITICALLY DAMPED PHYSICAL SPRING DRAWER & MODAL ENGINE (R3)
+   Damping: 1.0 (Critically damped, zero oscillation overshoot)
+   Response: 0.35s (350ms settling duration)
+   Symmetric dismiss along identical geometric path
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* History Slide-over Drawer Overlay */
+#history-drawer-modal {
+  transition: visibility var(--duration-modal);
+}
+
+#history-drawer-modal.hidden {
+  display: none;
+}
+
+#history-drawer-modal #history-drawer-backdrop,
+.drawer-backdrop {
+  opacity: 0;
+  transition: opacity var(--duration-modal) var(--ease-spring);
+  will-change: opacity;
+}
+
+#history-drawer-modal.is-open #history-drawer-backdrop,
+#history-drawer-modal.is-open .drawer-backdrop,
+.drawer-backdrop.is-open {
+  opacity: 1;
+}
+
+#history-drawer-modal .drawer-panel,
+.drawer-panel {
+  transform: translateX(100%);
+  transition: transform var(--duration-modal) var(--ease-spring);
+  will-change: transform;
+}
+
+#history-drawer-modal.is-open .drawer-panel,
+.drawer-modal.is-open .drawer-panel,
+.drawer-panel.is-open {
+  transform: translateX(0);
+}
+
+/* New Assignment Modal Overlay */
+#new-assignment-modal {
+  opacity: 0;
+  transition: opacity var(--duration-modal) var(--ease-spring);
+  will-change: opacity;
+}
+
+#new-assignment-modal.hidden {
+  display: none;
+}
+
+#new-assignment-modal.is-open {
+  opacity: 1;
+}
+
+.modal-backdrop {
+  opacity: 0;
+  transition: opacity var(--duration-modal) var(--ease-spring);
+  will-change: opacity;
+}
+
+.modal-backdrop.is-open {
+  opacity: 1;
+}
+
+#new-assignment-modal .modal-surface,
+.modal-surface {
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform var(--duration-modal) var(--ease-spring), opacity var(--duration-modal) var(--ease-spring);
+  will-change: transform, opacity;
+}
+
+#new-assignment-modal.is-open .modal-surface,
+.modal-dialog.is-open .modal-surface,
+.modal-surface.is-open {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   APPLE ACCESSIBILITY & SYSTEM SIGNALS (WWDC §14 & WCAG 2.2 AA)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Prefers-Reduced-Motion: Graceful Cross-Fades & Zero Broken Transforms */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    /* NOTE: transform: none !important is intentionally omitted here to prevent */
+    /* breaking SVG circular gauges (.score-ring-circle rotate(-90deg)) and UI positioning */
+  }
+
+  /* Graceful Opacity Cross-Fades (WCAG 2.3.3 & Emil Kowalski Principles) */
+  .animate-enter,
+  .fade-transition,
+  .tab-panel,
+  [data-slot="card"] {
+    animation: none !important;
+    opacity: 1 !important;
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
+    transition-timing-function: ease-out !important;
+  }
+
+  /* Disable spatial translate and scale on tactile interactive items */
+  .btn,
+  [data-slot="button"],
+  .assign-card-item,
+  .eval-history-row,
+  #submission-dropzone,
+  .report-tab-btn,
+  #flow-tab-setup-btn,
+  #flow-tab-report-btn,
+  #status-banner-close {
+    transform: none !important;
+    transition: background-color 80ms ease, border-color 80ms ease, color 80ms ease !important;
+  }
+
+  /* Telemetry: Static active state without breathing keyframe oscillation */
+  .node-running {
+    animation: none !important;
+  }
+
+  .node-running::after {
+    animation: none !important;
+    opacity: 0.35 !important;
+    transform: none !important;
+  }
+
+  /* SVG Checkmarks: Render complete stroke immediately without drawing sweep */
+  .svg-check-anim {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .stage-badge-complete,
+  .badge-pop-in {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Circular Gauge: Retain essential transform: rotate(-90deg) without transition lag */
+  .score-ring-circle {
+    transition: none !important;
+  }
+
+  /* Skeleton Shimmer: Disable gradient sweep animation */
+  .skeleton-shimmer::after {
+    animation: none !important;
+    display: none !important;
+  }
+
+  /* Sliding Active Pill: Snap without spatial animation in reduced motion */
+  .sliding-pill,
+  #flow-sliding-pill,
+  #report-tab-indicator {
+    transition: none !important;
+  }
+
+  /* Progress Bar: Snap without transition in reduced motion */
+  #evaluation-progress-fill,
+  #live-pipeline-progress-bar {
+    transition: none !important;
+  }
+
+  /* Drawer & Modal: Opacity cross-fade only, disable translation/scaling */
+  #history-drawer-modal .drawer-panel,
+  .drawer-panel {
+    transform: none !important;
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
+    transition-timing-function: ease-out !important;
+  }
+  #history-drawer-modal:not(.is-open) .drawer-panel,
+  .drawer-panel:not(.is-open) {
+    opacity: 0 !important;
+  }
+  #history-drawer-modal.is-open .drawer-panel,
+  .drawer-panel.is-open {
+    opacity: 1 !important;
+  }
+
+  #new-assignment-modal .modal-surface,
+  .modal-surface {
+    transform: none !important;
+    transition-property: opacity !important;
+    transition-duration: 150ms !important;
+    transition-timing-function: ease-out !important;
+  }
+  #new-assignment-modal:not(.is-open) .modal-surface,
+  .modal-surface:not(.is-open) {
+    opacity: 0 !important;
+  }
+  #new-assignment-modal.is-open .modal-surface,
+  .modal-surface.is-open {
+    opacity: 1 !important;
+  }
+}
+
+/* 2. Prefers-Reduced-Transparency: Opaque High-Contrast Structural Surfaces */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-header: #F8F9FA;
+    --glass-surface: #FFFFFF;
+    --glass-elevated: #F8FAFC;
+    --glass-blur-heavy: 0px;
+    --glass-blur-medium: 0px;
+  }
+
+  .card-surface, [data-slot="card"],
+  .card-inner, [data-slot="card-inner"],
+  .glass-nav-header, header,
+  #key-popover-panel {
+    background-color: var(--bg-surface) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Solid opaque dark slate backdrop for drawer & modal overlays */
+  #history-drawer-backdrop,
+  #new-assignment-modal {
+    background-color: #0F172A !important;
+    opacity: 0.96 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  #live-agent-working-card {
+    background: #F0F9FF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* 3. Prefers-Contrast: More (WCAG AAA High-Contrast Palette) */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: #64748B;
+    --border-medium: #475569;
+    --text-primary: #020617;
+    --text-secondary: #0F172A;
+    --text-muted: #1E293B;
+    --text-subtle: #334155;
+    --accent-primary: #0369A1;
+  }
+  .btn-secondary {
+    border-width: 2px !important;
+    border-color: #475569 !important;
+  }
+  .card-surface, [data-slot="card"] {
+    border-color: #64748B !important;
+    box-shadow: none !important;
+  }
+}
